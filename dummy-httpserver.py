@@ -1,50 +1,36 @@
-#!/usr/bin/env python
+# -*- coding: utf-8; mode: python; tab-width: 4; indent-tabs-mode: nil -*-
 
-from http.server import BaseHTTPRequestHandler, HTTPServer
-import os
+# CSCI 6511: AI
+# Project 3: Generalized Tic-Tac-Toe
+# teamLHL
+# - Patrick Husson
+# - Hao Liu
+# - Eric Luo
+#
+# April 19, 2023
+#
+# dummy_httpserver.py - HTTP server used for testing the client
 
-#Create custom HTTPRequestHandler class
-class DummyHTTPRequestHandler(BaseHTTPRequestHandler):
+from bottle import request,  route,  run
+import json
+import urllib.parse
 
-    # def __init__():
-    #   self.model = model( ...parameters... )
+mycount = 0
 
-    # TODO - Handle GET and POST commands, pass required data to model
+@route('<mypath:path>', method=['GET', 'POST'])
+def query_handler( mypath ):
+    global mycount
+    mycount = mycount + 1
+    print( f"count={mycount}")
+    query = urllib.parse.parse_qs( request.query_string )
+    if query[ 'type' ][ 0 ] == 'team':
+        print( "Parsing the team command")
+    elif query[ 'type' ][ 0 ] == 'myTeams':
+        print( "Parsing the myTeams command" )
+    resp = {}
+    resp[ "code" ] = "OK"
+    return json.dumps( resp )
 
-    # Handle GET command
-    def do_GET(self):
-        rootdir = './' # file location
-        try:
-            if self.path.endswith('.html'):
-                f = open(rootdir + self.path,encoding='utf-8') #open requested file
 
-                #send code 200 response
-                self.send_response(200)
-
-                #send header first
-                self.send_header('Content-type','text-html; charset=utf-8')
-                self.end_headers()
-
-                #send file content to client
-                # (and make sure they are bytes-like objects)
-                self.wfile.write(f.read().encode())
-                f.close()
-                return
-
-        except IOError:
-            self.send_error(404, 'file not found')
-
-def run():
-    print('http server is starting...')
-
-    #ip and port of servr
-    #by default http server port is 80
-    #server_address = ('127.0.0.1', 80)
-    # Using a larger port number to get around system permissions
-    server_address = ('127.0.0.1',8080)
-    httpd = HTTPServer(server_address, DummyHTTPRequestHandler)
-    print('http server is running...')
-    httpd.serve_forever()
-
-if __name__ == '__main__':
-    run()
+if __name__ == "__main__":
+    run( host='localhost', port=8080, debug=True )

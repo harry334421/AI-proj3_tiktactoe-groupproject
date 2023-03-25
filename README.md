@@ -1,11 +1,12 @@
-# HTTP Server-Client Example / Model Example
+# HTTP Server-Client Example
 
-Adapted from some python 2.7 code:
-https://www.godo.dev/tutorials/python-http-server-client/
+This is an attempt to create a solid frame for the Tic-Tac-Toe game that allows it to interact with other engines.
 
 ## Packages required
 
-I needed to install the python3-httpbin package on my computer to get access to the HTTP server handlers. I also installed the requests package for making the API calls.
+- bottle
+- json
+- urllib
 
 ## Running the Server/Client
 
@@ -23,16 +24,6 @@ For the client:
 
 ```
     python3 project-httpclient.py http://127.0.0.1:8080
-```
-
-## Running the MVC
-
-This example is adapted from `https://www.tutorialspoint.com/python_design_patterns/python_design_patterns_model_view_controller.htm`. It is probably overkill to follow this pattern since the interactions between the server and client follow a tight script.
-
-The controller is the main class.
-
-```
-    python3 controller.py
 ```
 
 ## Troubleshooting

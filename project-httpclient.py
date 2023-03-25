@@ -1,38 +1,63 @@
-#!/usr/bin/env python
+# -*- coding: utf-8; mode: python; tab-width: 4; indent-tabs-mode: nil -*-
 
+# CSCI 6511: AI
+# Project 3: Generalized Tic-Tac-Toe
+# teamLHL
+# - Eric Luo
+# - Patrick Husson
+# - Hao Liu
+#
+# April 19, 2023
+#
+# project_httpclient.py - HTTP client side of the game (our side)
+
+import ast
 import requests
-import sys
+import urllib.parse
+
+# Using the default requests user agent caused errors with the class server:
+# 'Not Acceptable! An appropriate representation of the requested resource could
+# not be found on this server.'
+dummy_ua = 'Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101 Firefox/102.0'
 
 if __name__ == '__main__':
 
-    #get http server ip
-    http_server = sys.argv[1]
+    # Make sure API key and user ID are in memory
+    my_id = 0
+    my_key = 0
+    with open( 'token.txt' ) as f:
+        for line in f:
+            if not line.startswith( "#" ):
+                values = line.split( ',' )
+                my_id = values[ 0 ]
+                my_key = values[ 1 ].strip()
+                break
 
-    # Create model
-    #model = model( ...parameters... )
+    #http_server = "https://www.notexponential.com/aip2pgaming/api/index.php
+    http_server = 'http://127.0.0.1:8080'
 
-    # Initialize game
-    # If we are team 1, we go first with 'X' (?)
-    # If we are team 2, we go second with 'O' (?)
-    # requests.post( ... )
-
-    # If we went first, make a move
+    params = {}
+    # Message 1
+    #params[ 'type' ] = 'myTeams'
+    # Message 2
+    params[ 'type' ] = 'team'
+    params[ 'teamId' ] = '1338'
     # ...
 
-    # Will become something like 'while !model.in_end_state():' ?
-    while True:
+    query = urllib.parse.urlencode( params )
+    url = f"{http_server}?{query}"
 
-        # Will we need to get the board state and list of moves each time?
-        # ...
+    payload={}
+    headers = {
+        'x-api-key': my_key,
+        'userid': my_id,
+        'User-Agent': dummy_ua
+    }
+    payload={}
 
-        # Just something to demonstrate that server is communicating
-        myinput = input('input GET command (ex. dummy.html): ')
-        myinput = myinput.split()
+    # Just replace "GET" with "POST" as necessary
+    response = requests.request( "GET", url, headers=headers, data=payload )
 
-        if myinput[0] == 'exit': #type exit to end it
-            break
-
-        url = f"{http_server}/{myinput[0]}"
-        rg = requests.get( url )
-
-        print( rg.text )
+    print( response.text )
+    mydict = ast.literal_eval( response.text )
+    print(f"Response as JSON:{mydict}")
