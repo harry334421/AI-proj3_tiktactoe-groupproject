@@ -9,7 +9,9 @@ I needed to install the python3-httpbin package on my computer to get access to 
 
 ## Running the Server/Client
 
-Run in two separate terminal windows.
+First, copy your user id and API key into `token_TEMPLATE.txt` and save as `token.txt`.
+
+Now, run in two separate terminal windows.
 
 For the server:
 
