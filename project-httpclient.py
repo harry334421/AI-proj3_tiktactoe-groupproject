@@ -25,26 +25,25 @@ if __name__ == '__main__':
     # Make sure API key and user ID are in memory
     my_id = 0
     my_key = 0
-    with open( 'token.txt' ) as f:
+    with open('token.txt') as f:
         for line in f:
-            if not line.startswith( "#" ):
-                values = line.split( ',' )
-                my_id = values[ 0 ]
-                my_key = values[ 1 ].strip()
+            if not line.startswith("#"):
+                values = line.split(',')
+                my_id = values[0]
+                my_key = values[1].strip()
                 break
 
     #http_server = "https://www.notexponential.com/aip2pgaming/api/index.php
     http_server = 'http://127.0.0.1:8080'
 
     params = {}
-    # Message 1
-    #params[ 'type' ] = 'myTeams'
-    # Message 2
-    params[ 'type' ] = 'team'
-    params[ 'teamId' ] = '1338'
+    params['type'] = 'game'
+    params['teamId1'] = '1000'
+    params['teamId2'] = '1001'
+    params['gameType'] = 'TTT'
     # ...
 
-    query = urllib.parse.urlencode( params )
+    query = urllib.parse.urlencode(params)
     url = f"{http_server}?{query}"
 
     payload={}
@@ -53,11 +52,10 @@ if __name__ == '__main__':
         'userid': my_id,
         'User-Agent': dummy_ua
     }
-    payload={}
 
     # Just replace "GET" with "POST" as necessary
-    response = requests.request( "GET", url, headers=headers, data=payload )
+    response = requests.request("GET", url, headers=headers, data=payload)
 
-    print( response.text )
-    mydict = ast.literal_eval( response.text )
+    print(response.text)
+    mydict = ast.literal_eval(response.text)
     print(f"Response as JSON:{mydict}")
