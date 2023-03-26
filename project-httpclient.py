@@ -33,12 +33,9 @@ real_http_server = 'https://www.notexponential.com/aip2pgaming/api/index.php'
 
 my_games = {}
 
-def create_new_game():
+def create_new_game(board_size, target_size):
     # TODO - Temporary - just going to hardcode some things for now
     # - Client will be Player 1, Server will be Player 2
-    # - Board size and target will be for a standard game
-    board_size = 3
-    target_size = 3
 
     params = {}
     params['type'] = 'game'
@@ -62,7 +59,7 @@ def create_new_game():
     response = ast.literal_eval(raw_response.text)
 
     if ( response['code'] == 'OK'):
-        print(f"Created game {response['gameid']} successfully")
+        print(f"Created game {response['gameId']} successfully")
     else:
         print(f"Failure in creating game,  message={response['message']}")
 
@@ -84,20 +81,58 @@ def get_my_games():
     raw_response = requests.request("GET", url, headers=headers, data=payload)
     response = ast.literal_eval(raw_response.text)
     if ( response['code'] == 'OK'):
-        mygames = response['games']
-        print(f"mygames={mygames}")
+        my_games = response['games']
+        print(f"my_games={my_games}")
     else:
         print(f"Failure in creating game,  message={response['message']}")
 
-def play():
-    # TODO - Temporary - just create a new game by default
-    create_new_game()
+    return my_games
 
-    # TODO - Temporary - want to see this grow over time
-    get_my_games()
+
+def get_game_board(game_id):
+    params = {}
+    params['type'] = 'boardString'
+    params['gameId'] = game_id
+
+    query = urllib.parse.urlencode(params)
+    url = f"{dummy_http_server}?{query}"
+
+    payload={}
+    headers = {
+        'x-api-key': my_key,
+        'userid': my_id,
+        'User-Agent': dummy_ua
+    }
+
+    raw_response = requests.request("GET", url, headers=headers, data=payload)
+    response = ast.literal_eval(raw_response.text)
+    if ( response['code'] == 'OK'):
+        board = response['output']
+    else:
+        print(f"Failure in getting board for {game_id},  message={response['message']}")
+
+    return board
+
+
+def demo():
+    # Create a few new games
+    board_size = 3
+    target_size = 3
+    create_new_game(board_size,  target_size)
+
+    board_size += 1
+    create_new_game(board_size,  target_size)
+
+    # Make sure the server sees them
+    my_games = get_my_games()
+
+    # Show the boards (the reason why we changed the sizes earlier)
+    for game_id in my_games:
+        board = get_game_board(game_id)
+        print(f"Board {game_id}:")
+        print(board)
 
 if __name__ == '__main__':
-
     # Make sure API key and user ID are in memory
     with open('token.txt') as f:
         for line in f:
@@ -107,6 +142,6 @@ if __name__ == '__main__':
                 my_key = values[1].strip()
                 break
 
-    play()
+    demo()
 
 

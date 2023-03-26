@@ -18,6 +18,7 @@ import urllib.parse
 
 query_counter = 0
 game_id_counter = 2000
+move_id_counter = 0
 all_games = {}
 
 # Note: the dummy server will handle a mismatch between the method and the
@@ -36,26 +37,20 @@ def query_handler(mypath):
         resp = handle_create_game(query)
     elif query_type == 'myGames' or query_type == 'myOpenGames':
         resp = handle_get_my_games(query)
-#        # No other parameters...
-#        print(f"Valid {query_type} command")
-#    elif query_type == 'move':
-#        if 'gameId' in query and \
-#            'teamId' in query and \
-#            'move' in query:
-#                # TODO - Make the checks for valid items
-#                print(f"Valid {query_type} command")
+    elif query_type == 'move':
+        resp = handle_move(query)
 #    elif query_type == 'moves':
 #        if 'gameId' in query and \
 #            'count' in query:
 #            print(f"Valid {query_type} command")
-#    elif query_type == 'boardString':
-#        if 'gameId' in query:
-#            print(f"Valid {query_type} command")
+    elif query_type == 'boardString':
+        resp = handle_request_board_string(query)
 #    elif query_type == 'boardMap':
 #        if 'gameId' in query:
 #            print(f"Valid {query_type} command")
     else:
         err_msg = f"This server does not handle the '{query_type}' command"
+        resp = {}
         resp["code"] = "FAIL"
         resp["message"] = err_msg
 
@@ -80,7 +75,7 @@ def handle_create_game(query):
 
             resp = {}
             resp['code'] = "OK"
-            resp['gameid'] = game_id_counter
+            resp['gameId'] = game_id_counter
             print(f"Valid {query_type} command: boardSize={board_size}, target={target}")
             new_ttt = TicTacToe(board_size, target)
             all_games[game_id_counter] = new_ttt
@@ -88,7 +83,7 @@ def handle_create_game(query):
     else:
         resp = {}
         resp["code"] = "FAIL"
-        resp["message"] = f"This server does not handle the '{query_type}' command"
+        resp["message"] = f"Invalid '{query_type}' command: query={query}"
     return resp
 
 
@@ -99,6 +94,61 @@ def handle_get_my_games(query):
     resp["games"] = list(all_games.keys())
 
     return resp
+
+
+def handle_move(query):
+    global move_id_counter
+    query_type = query['type'][0]
+
+    # Assuming failure by default
+    # TODO - Make an actual check of the board to see if valid move
+    # - Is it the move for the proper player?
+    # - Is the move within bounds?
+    # - Is the move on top of a taken space?
+    resp = {}
+    resp['code'] = "FAIL"
+    resp['message'] = f"Generic error for query={query}"
+
+    if not 'gameId' in query or \
+        not 'teamId' in query or \
+        not 'move' in query:
+            resp = {}
+            resp["code"] = "FAIL"
+            resp["message"] = f"Invalid '{query_type}' command: query={query}"
+    else:
+        gameId = int(query['gameId'][0])
+        #teamId = int(query['teamId'][0]) # TODO - Use teamId to check if it's for the right turn
+        if not gameId in all_games.keys():
+            resp["message"] = f"Game ID invalid: query={query}"
+        # TODO - elif move for the given game is invalid...
+        else:
+            resp['code'] = "OK"
+            resp['moveId'] = move_id_counter
+            move_id_counter += 1
+
+    return resp
+
+
+def handle_request_board_string(query):
+    query_type = query['type'][0]
+
+    # Assuming failure by default
+    resp = {}
+    resp['code'] = "FAIL"
+    resp['message'] = f"Generic error for query={query}"
+
+    if not 'gameId' in query:
+        resp["message"] = f"Invalid '{query_type}' command: query={query}"
+    elif not int(query['gameId'][0]) in all_games.keys():
+        resp["message"] = f"Game ID invalid: query={query}"
+    else:
+        game_id = int(query['gameId'][0])
+        current_game = all_games[game_id]
+        resp['code'] = "OK"
+        resp['output'] = current_game.board_to_string( current_game.board )
+
+    return resp
+
 
 if __name__ == "__main__":
     run(host='localhost', port=8080, debug=True)

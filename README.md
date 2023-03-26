@@ -8,6 +8,14 @@ This is an attempt to create a solid frame for the Tic-Tac-Toe game that allows 
 - json
 - urllib
 
+## Running the Game Logic
+
+The game logic is in a separate file (mostly for now). You can adjust the board size and have it play against itself
+
+```
+    python3 V9-MinMax+PatternSeeking-TTT-.py
+```
+
 ## Running the Server/Client
 
 First, copy your user id and API key into `token_TEMPLATE.txt` and save as `token.txt`.
@@ -23,8 +31,14 @@ For the server:
 For the client:
 
 ```
-    python3 project-httpclient.py http://127.0.0.1:8080
+    python3 project-httpclient.py
 ```
+
+## TODOs
+
+- Integrate Eric's logic into Tic-Tac-Toe (in progress)
+- Test commands against real server
+- ...
 
 ## Troubleshooting
 
