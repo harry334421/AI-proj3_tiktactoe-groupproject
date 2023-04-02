@@ -117,7 +117,7 @@ def handle_move(query):
             resp["message"] = f"Invalid '{query_type}' command: query={query}"
     else:
         gameId = int(query['gameId'][0])
-        #teamId = int(query['teamId'][0]) # TODO - Use teamId to check if it's for the right turn
+        #lteamId = int(query['teamId'][0]) # TODO - Use teamId to check if it's for the right turn
         if not gameId in all_games.keys():
             resp["message"] = f"Game ID invalid: query={query}"
         # TODO - elif move for the given game is invalid...
