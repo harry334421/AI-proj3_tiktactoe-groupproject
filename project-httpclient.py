@@ -33,17 +33,19 @@ real_http_server = 'https://www.notexponential.com/aip2pgaming/api/index.php'
 
 my_games = {}
 
-def create_new_game(board_size, target_size):
-    # TODO - Temporary - just going to hardcode some things for now
-    # - Client will be Player 1, Server will be Player 2
-
+def create_new_game(board_size, target_size,  me_first):
     params = {}
     params['type'] = 'game'
-    params['teamId1'] = my_id
-    params['teamId2'] = dummy_id # TODO - Check if using dummy eventually...
     params['gameType'] = 'TTT'
     params['boardSize'] = board_size
     params['target'] = target_size
+
+    if me_first:
+        params['teamId1'] = my_id
+        params['teamId2'] = dummy_id # TODO - Check if using dummy eventually...
+    else:
+        params['teamId1'] = dummy_id
+        params['teamId2'] = my_id
 
     query = urllib.parse.urlencode(params)
     url = f"{dummy_http_server}?{query}"
@@ -118,10 +120,12 @@ def demo():
     # Create a few new games
     board_size = 3
     target_size = 3
-    create_new_game(board_size,  target_size)
+    me_first = True
+    create_new_game(board_size,  target_size,  me_first)
 
     board_size += 1
-    create_new_game(board_size,  target_size)
+    me_first = False
+    create_new_game(board_size,  target_size,  me_first)
 
     # Make sure the server sees them
     my_games = get_my_games()
