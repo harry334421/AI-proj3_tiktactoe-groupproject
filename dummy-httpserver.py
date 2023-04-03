@@ -11,10 +11,15 @@
 #
 # dummy_httpserver.py - HTTP server used for testing the client
 
+
+from game import Game
+from strategy_random import StrategyRandom
+
+import ast
 from bottle import request,  route,  run
 import json
-from tictactoe import TicTacToe
 import urllib.parse
+
 
 query_counter = 0
 game_id_counter = 2000
@@ -39,15 +44,12 @@ def query_handler(mypath):
         resp = handle_get_my_games(query)
     elif query_type == 'move':
         resp = handle_move(query)
-#    elif query_type == 'moves':
-#        if 'gameId' in query and \
-#            'count' in query:
-#            print(f"Valid {query_type} command")
+    elif query_type == 'moves':
+        resp = handle_request_moves(query)
     elif query_type == 'boardString':
         resp = handle_request_board_string(query)
-#    elif query_type == 'boardMap':
-#        if 'gameId' in query:
-#            print(f"Valid {query_type} command")
+    elif query_type == 'boardMap':
+        resp = handle_request_board_map(query)
     else:
         err_msg = f"This server does not handle the '{query_type}' command"
         resp = {}
@@ -72,13 +74,16 @@ def handle_create_game(query):
             target = 6 # Default
             if 'target' in query:
                 target = int(query['target'][0])
+            team1 = int(query['teamId1'][0])
+            team2 = int(query['teamId2'][0])
+            game_id = game_id_counter
+
+            new_game = Game(team1, team2, board_size, target, game_id)
+            all_games[game_id_counter] = new_game
 
             resp = {}
             resp['code'] = "OK"
             resp['gameId'] = game_id_counter
-            print(f"Valid {query_type} command: boardSize={board_size}, target={target}")
-            new_ttt = TicTacToe(board_size, target)
-            all_games[game_id_counter] = new_ttt
             game_id_counter += 1
     else:
         resp = {}
@@ -101,10 +106,11 @@ def handle_move(query):
     query_type = query['type'][0]
 
     # Assuming failure by default
-    # TODO - Make an actual check of the board to see if valid move
-    # - Is it the move for the proper player?
-    # - Is the move within bounds?
-    # - Is the move on top of a taken space?
+    # - Does the game exist?
+    # - Is the team a participant in the game
+    # - Is it the turn of the player making the move?
+    # - Are the move dimensions valid?
+    # - Has the game already been won?
     resp = {}
     resp['code'] = "FAIL"
     resp['message'] = f"Generic error for query={query}"
@@ -112,24 +118,77 @@ def handle_move(query):
     if not 'gameId' in query or \
         not 'teamId' in query or \
         not 'move' in query:
-            resp = {}
-            resp["code"] = "FAIL"
             resp["message"] = f"Invalid '{query_type}' command: query={query}"
-    else:
-        gameId = int(query['gameId'][0])
-        #lteamId = int(query['teamId'][0]) # TODO - Use teamId to check if it's for the right turn
-        if not gameId in all_games.keys():
-            resp["message"] = f"Game ID invalid: query={query}"
-        # TODO - elif move for the given game is invalid...
+            return resp
+
+    game_id = int(query['gameId'][0])
+    team_id = int(query['teamId'][0])
+
+    move_list = ast.literal_eval(query['move'][0])
+    row = move_list[1]
+    col = move_list[0]
+    if not game_id in all_games.keys():
+        resp["message"] = f"Game '{game_id}' does not exist: query={query}"
+        return resp
+
+    current_game = all_games[game_id]
+    if not team_id == int(current_game.player1) and not team_id == int(current_game.player2):
+        resp["message"] = f"Team {team_id} is not involved in game {game_id}: query={query}"
+        return resp
+
+    if not team_id == current_game.whose_turn():
+        resp["message"] = f"It is not {team_id}'s turn: query={query}"
+        return resp
+
+    if not current_game.is_valid_move(team_id, row, col):
+        resp["message"] = f"Invalid move: query={query}"
+        return resp
+
+    if current_game.is_game_over():
+        resp["message"] = f"Game already over: winner={current_game.winner()},  query={query}"
+        return resp
+
+    # Passed all the tests, can finally make the move
+    current_game.make_move(team_id, row, col)
+
+    resp['code'] = "OK"
+    resp['moveId'] = move_id_counter
+    move_id_counter += 1
+
+    if not current_game.is_game_over():
+        # TODO - Place this elsewhere so a delay can be introduced
+        strategy = StrategyRandom(current_game.ttt)
+        if team_id == int(current_game.player1):
+            server_id = int(current_game.player2)
         else:
-            resp['code'] = "OK"
-            resp['moveId'] = move_id_counter
-            move_id_counter += 1
+            server_id = int(current_game.player1)
+        row, col = strategy.select_next_move_coords(server_id==current_game.player1)
+        current_game.make_move(server_id, row, col)
 
     return resp
 
 
 def handle_request_board_string(query):
+    query_type = query['type'][0]
+
+    # Assuming failure by default
+    resp = {}
+    resp['code'] = "FAIL"
+
+    if not 'gameId' in query:
+        resp["message"] = f"Invalid '{query_type}' command: query={query}"
+    elif not int(query['gameId'][0]) in all_games.keys():
+        resp["message"] = f"Game ID invalid: query={query}"
+    else:
+        game_id = int(query['gameId'][0])
+        current_game = all_games[game_id]
+        resp['code'] = "OK"
+        resp['output'] = current_game.get_board()
+
+    return resp
+
+
+def handle_request_board_map(query):
     query_type = query['type'][0]
 
     # Assuming failure by default
@@ -145,7 +204,36 @@ def handle_request_board_string(query):
         game_id = int(query['gameId'][0])
         current_game = all_games[game_id]
         resp['code'] = "OK"
-        resp['output'] = current_game.board_to_string( current_game.board )
+        resp['output'] = current_game.get_map()
+
+    return resp
+
+
+def handle_request_moves(query):
+    query_type = query['type'][0]
+
+    # Assuming failure by default
+    resp = {}
+    resp['code'] = "FAIL"
+    resp['message'] = f"Generic error for query={query}"
+
+    if not 'gameId' in query:
+        resp["message"] = f"Invalid '{query_type}' command: query={query}"
+        return resp
+
+    if not int(query['gameId'][0]) in all_games.keys():
+        resp["message"] = f"Game ID invalid: query={query}"
+        return resp
+
+    game_id = int(query['gameId'][0])
+    count = int(query['count'][0])
+    current_game = all_games[game_id]
+    all_moves = current_game.get_moves()
+    # Get just the last n moves
+    wanted_moves = all_moves[-count:]
+
+    resp['code'] = "OK"
+    resp['moves'] = wanted_moves
 
     return resp
 
