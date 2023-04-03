@@ -31,12 +31,15 @@ For the server:
 For the client:
 
 ```
-    python3 project-httpclient.py
+    python3
+    >>> exec(open("example_game.py").read())
+    # Now make moves using phc.make_move(game_id,row,col)
+    phc.make_move(2000,0,0)
 ```
 
 ## TODOs
 
-- Integrate Eric's logic into Tic-Tac-Toe (in progress)
+- Integrate Eric's logic into separate strategy files
 - Test commands against real server
 - ...
 

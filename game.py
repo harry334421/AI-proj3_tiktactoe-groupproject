@@ -26,6 +26,7 @@ class Game:
         self.is_player1_turn = True
         self.ttt = TicTacToe(board_size, target_size)
         self.moves_made = []
+        self.game_over = False
         # For (roughly) simulating a server - not useful for the client by itself
         self.move_id_counter = 1000
 
@@ -68,8 +69,35 @@ class Game:
             return default_symbol
 
 
-    def moves(self):
+    def get_moves(self):
         return self.moves_made
+
+
+    def is_valid_move(self,  team,  row,  col):
+        is_player1 = (team == self.whose_turn())
+        return self.ttt.is_valid_move(is_player1, row, col)
+
+
+    def is_game_over(self):
+        return self.ttt.game_over
+
+
+    def get_board(self):
+        return self.ttt.get_board()
+
+
+    def get_map(self):
+        return self.ttt.get_map()
+
+
+    def get_winner(self):
+        winner_id = -1 # Invalid winner ID to start
+        if self.ttt.winner == 1:
+            winner_id = self.player1
+        elif self.ttt.winner == -1:
+            winner_id = self.player2
+
+        return winner_id
 
 
     def __str__(self):
@@ -86,3 +114,4 @@ if __name__=='__main__':
     game.make_move(team=1, row=1, col=1)
     print(f"After a move was made,  it is now {game.whose_turn()}'s turn")
     print(game)
+    print(f"The game map is now {game.get_map()}")

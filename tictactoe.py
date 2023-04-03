@@ -14,7 +14,7 @@
 
 #import math
 #import copy
-import random
+
 #import time
 import numpy as np
 #from multiprocessing import Manager, Pool, cpu_count
@@ -32,6 +32,8 @@ class TicTacToe:
         self.board = np.zeros([board_size, board_size])
         self.player1_turn = True
         self.moves = []
+        self.game_over = False
+        self.winner_id = -1 # Invalid to start
 
 
     # Visual representation of the board
@@ -40,10 +42,20 @@ class TicTacToe:
 
 
     def board_to_string(self,  board):
+        rows,  cols = self.board.shape
         boardstr = str()
-        for row in board:
-            boardstr += " ".join(["X" if x == 1 else "O" if x == -1 else "_" for x in row])
+        for row in range(rows):
+            for col in range(cols):
+                boardstr += " "
+                if self.board[row][col] == 1:
+                    boardstr += "X"
+                elif self.board[row][col] == -1:
+                    boardstr += "O"
+                else:
+                    boardstr += "_"
+
             boardstr += "\n"
+
         return boardstr
 
 
@@ -128,19 +140,10 @@ class TicTacToe:
 
         self.board[row][col] = piece_value
         self.player1_turn = not self.player1_turn
-        return row, col
-
-
-    def select_next_move_coords(self,  is_player1):
-        row = 0
-        col = 0
-        # TODO - add the sophisticated logic using is_player1
-        while True:
-            row = random.randrange(self.board_size)
-            col = random.randrange(self.board_size)
-            if self.board[row][col] == 0:
-                break
-
+        winner_id = self.check_winner(self.board,  self.target)
+        if winner_id != 0:
+            self.game_over = True
+            self.winner_id = winner_id
         return row, col
 
 
@@ -189,6 +192,27 @@ class TicTacToe:
             print("Player 2 (Minimizing player) wins!")
         else:
             print("It's a draw!")
+
+
+    def get_map(self):
+        rows,  cols = self.board.shape
+        move_map = {}
+        for row in range(rows):
+            for col in range(cols):
+                key = f"{col},{row}"
+                # Player 1
+                if self.board[row][col] == 1:
+                    move_map[key] = 'X'
+                # Player 2
+                elif self.board[row][col] == -1:
+                    move_map[key] = 'O'
+                # Otherwise do nothing...
+
+        return str(move_map)
+
+
+    def get_board(self):
+        return self.board_to_string(self.board)
 
 
     def __str__(self):
