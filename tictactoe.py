@@ -12,16 +12,8 @@
 # tictactoe.py - Generalized Tic-Tac-Toe game (board and operations)
 
 
-#import math
-#import copy
-
-#import time
 import numpy as np
-#from multiprocessing import Manager, Pool, cpu_count
-
-# Adjustable thresholds when using multiprocessing
-#TIMEOUT=5
-#cpu=cpu_count()-1
+import random
 
 
 class TicTacToe:
@@ -178,7 +170,14 @@ class TicTacToe:
                 # Player 2 (Minimizing player)
                 print(f'Player {"O"}')
 
-            row, col = self.select_next_move_coords(self.is_player1_turn())
+            # Just use the random strategy
+            row = 0
+            col = 0
+            while True:
+                row = random.randrange(self.board_size)
+                col = random.randrange(self.board_size)
+                if self.board[row][col] == 0:
+                    break
             self.make_move(self.is_player1_turn(), row, col)
             self.print_board()
 
