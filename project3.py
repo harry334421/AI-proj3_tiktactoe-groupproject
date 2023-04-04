@@ -1,4 +1,15 @@
-# example_game.py
+# -*- coding: utf-8; mode: python; tab-width: 4; indent-tabs-mode: nil -*-
+
+# CSCI 6511: AI
+# Project 3: Generalized Tic-Tac-Toe
+# teamLHL
+# - Eric Luo
+# - Patrick Husson
+# - Hao Liu
+#
+# April 19, 2023
+#
+# project3.py - Main menu for creating and playing games
 
 
 from project_httpclient import ProjectHttpClient
