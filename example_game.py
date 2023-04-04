@@ -20,7 +20,7 @@ if __name__=='__main__':
     main_menu = {}
     main_menu['1']="List games"
     main_menu['2']="Create new game"
-    main_menu['3']="Play existing game"
+    main_menu['3']="Play single move"
     main_menu['4']="Show moves for existing game"
     main_menu['5']="Show map for existing game"
     main_menu['6']="Show board for existing game"
@@ -38,7 +38,6 @@ if __name__=='__main__':
         if selection =='1':
             print(f"Listing games for {my_id}...\n")
             phc.get_my_games()
-            print("\n")
 
         elif selection == '2':
             print(f"Creating new game for {my_id}...")
@@ -52,13 +51,13 @@ if __name__=='__main__':
             else:
                 opponent_id = team1_id
             phc.create_new_game(board_size,  target_size, opponent_id,  me_first)
-            print("\n")
 
         elif selection == '3':
-            print(f"Playing existing game for {my_id}...\n")
+            print(f"Playing single move for {my_id} (with upper-left as origin)...\n")
             game_id = input("Game ID: ")
-            # TODO...more logic here than the other options
-            print("\n")
+            row = input("Row (y-coordinate): ")
+            col = input("Column (x-coordinate): ")
+            phc.make_move(game_id,  row,  col)
 
         elif selection == '4':
             print("Getting the move list...\n")
@@ -66,21 +65,18 @@ if __name__=='__main__':
             count = input("Count (number of moves in the past to get): ")
             my_moves = phc.get_moves(game_id,  count)
             print(my_moves)
-            print("\n")
 
         elif selection == '5':
             print("Getting the game map...\n")
             game_id = input("Game ID: ")
             my_map = phc.get_game_map(game_id)
             print(my_map)
-            print("\n")
 
         elif selection == '6':
             print("Getting the game board...\n")
-            game_id = input("Game ID:")
+            game_id = input("Game ID: ")
             my_board = phc.get_game_board(game_id)
             print(my_board)
-            print("\n")
 
         elif selection == '7':
             print("Exiting...")
@@ -88,6 +84,7 @@ if __name__=='__main__':
 
         else:
             print(f"{selection} is invalid")
+
         print("\n")
 
 # Create a few new games

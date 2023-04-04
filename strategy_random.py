@@ -16,17 +16,14 @@ import random
 
 
 class StrategyRandom:
-    # Constructor
-    def __init__(self,  ttt):
-        self.ttt = ttt
 
-    def select_next_move_coords(self,  is_player1):
+    def select_next_move_coords(self,  ttt,  is_player1):
         row = 0
         col = 0
         while True:
-            row = random.randrange(self.ttt.board_size)
-            col = random.randrange(self.ttt.board_size)
-            if self.ttt.board[row][col] == 0:
+            row = random.randrange(ttt.board_size)
+            col = random.randrange(ttt.board_size)
+            if ttt.board[row][col] == 0:
                 break
 
         return row, col
