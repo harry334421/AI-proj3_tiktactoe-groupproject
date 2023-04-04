@@ -22,7 +22,7 @@ First, copy your user id and API key into `token_TEMPLATE.txt` and save as `toke
 
 Now, run in two separate terminal windows.
 
-For the server:
+For the server (start it first):
 
 ```
     python3 dummy-httpserver.py
@@ -31,10 +31,7 @@ For the server:
 For the client:
 
 ```
-    python3
-    >>> exec(open("example_game.py").read())
-    # Now make moves using phc.make_move(game_id,row,col)
-    phc.make_move(2000,0,0)
+    python3 project3.py
 ```
 
 ## TODOs

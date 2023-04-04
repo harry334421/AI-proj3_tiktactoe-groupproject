@@ -25,6 +25,8 @@ query_counter = 0
 game_id_counter = 2000
 move_id_counter = 0
 all_games = {}
+server_id = 9999
+strategy = StrategyRandom()
 
 # Note: the dummy server will handle a mismatch between the method and the
 # command but the real server won't...
@@ -81,10 +83,16 @@ def handle_create_game(query):
             new_game = Game(team1, team2, board_size, target, game_id)
             all_games[game_id_counter] = new_game
 
+            # Make the initial move if it is the server's turn
+            if server_id == int(new_game.player1):
+                row, col = strategy.select_next_move_coords(new_game.ttt, server_id==new_game.player1)
+                new_game.make_move(server_id, row, col)
+
             resp = {}
             resp['code'] = "OK"
             resp['gameId'] = game_id_counter
             game_id_counter += 1
+
     else:
         resp = {}
         resp["code"] = "FAIL"
@@ -157,12 +165,11 @@ def handle_move(query):
 
     if not current_game.is_game_over():
         # TODO - Place this elsewhere so a delay can be introduced
-        strategy = StrategyRandom(current_game.ttt)
         if team_id == int(current_game.player1):
             server_id = int(current_game.player2)
         else:
             server_id = int(current_game.player1)
-        row, col = strategy.select_next_move_coords(server_id==current_game.player1)
+        row, col = strategy.select_next_move_coords(current_game.ttt,  server_id==current_game.player1)
         current_game.make_move(server_id, row, col)
 
     return resp
