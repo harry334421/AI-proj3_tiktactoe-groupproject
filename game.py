@@ -35,7 +35,7 @@ class Game:
         team_is_player1 = team == self.player1
         if self.ttt.is_valid_move(team_is_player1,  row, col):
             self.ttt.make_move(team_is_player1, row, col)
-            # Store the move for records
+            # Store the move for internal records
             current_move = {}
             current_move['moveId'] = self.move_id_counter
             current_move['gameId'] = self.game_id

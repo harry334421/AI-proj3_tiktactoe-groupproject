@@ -99,6 +99,30 @@ class ProjectHttpClient:
         return my_games
 
 
+    def get_game_map(self, game_id):
+        params = {}
+        params['type'] = 'boardMap'
+        params['gameId'] = game_id
+
+        query = urllib.parse.urlencode(params)
+        url = f"{self.server_url}?{query}"
+
+        payload={}
+        headers = {
+            'x-api-key': self.api_key,
+            'userid': self.my_id,
+            'User-Agent': self.ua
+        }
+
+        raw_response = requests.request("GET", url, headers=headers, data=payload)
+        response = ast.literal_eval(raw_response.text)
+        if ( response['code'] == 'OK'):
+            board_map = response['output']
+        else:
+            print(f"Failure in getting board for {game_id},  message={response['message']}")
+
+        return board_map
+
     def get_game_board(self, game_id):
         params = {}
         params['type'] = 'boardString'
