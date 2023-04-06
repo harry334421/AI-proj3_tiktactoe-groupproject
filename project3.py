@@ -14,8 +14,18 @@
 
 from project_httpclient import ProjectHttpClient
 
+import argparse
+
 
 if __name__=='__main__':
+    # Adding the '-d' command line argument to play against the dummy server
+    parser = argparse.ArgumentParser(prog='project3',
+                                                                description='Generalized TicTacToe game')
+    parser.add_argument('-d','--dummy',
+                                        action='store_true',
+                                        help="Play against the dummy server instead of the real one" )
+    args = parser.parse_args()
+
     # Make sure API key and user ID are in memory
     with open('token.txt') as f:
         for line in f:
@@ -25,8 +35,7 @@ if __name__=='__main__':
                 my_key = values[1].strip()
                 break
 
-    playing_real_server = False
-    phc = ProjectHttpClient(my_id,  my_key,  playing_real_server)
+    phc = ProjectHttpClient(my_id,  my_key,  args.dummy)
 
     main_menu = {}
     main_menu['1']="List games"

@@ -29,16 +29,16 @@ class ProjectHttpClient:
     # Constructor
     # my_id: Team ID of client (us)
     # api_key: Required API key (necessary for using class server)
-    # play_real_server: True if playing the real server, False if playing the dummy server
-    def __init__(self, my_id,  api_key,  play_real_server):
+    # play_dummy_server: True if playing the dummy server, False if playing the real server
+    def __init__(self, my_id,  api_key,  play_dummy_server):
         self.my_games = {}
         self.my_id = my_id
         self.api_key = api_key
         self.ua = fake_ua
-        if play_real_server:
-            self.server_url = real_http_server
+        if play_dummy_server:
+            self.server_url = dummy_http_server
         else:
-           self.server_url = dummy_http_server
+           self.server_url = real_http_server
 
 
     def create_new_game(self, board_size, target_size,  opponent_id, me_first):
