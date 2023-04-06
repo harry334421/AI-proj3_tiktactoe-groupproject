@@ -40,6 +40,35 @@ class ProjectHttpClient:
         else:
            self.server_url = real_http_server
 
+        # Getting teams from the server just to be sure we can make moves
+        self.teams = self.get_my_teams()
+
+    def get_my_teams(self):
+        params = {}
+        params['type'] = 'myTeams'
+
+        query = urllib.parse.urlencode(params)
+        url = f"{self.server_url}?{query}"
+
+        payload={}
+        headers = {
+            'x-api-key': self.api_key,
+            'userid': self.my_id,
+            'User-Agent': self.ua
+        }
+
+        raw_response = requests.request("GET", url, headers=headers, data=payload)
+        response = json.loads(raw_response.text)
+
+        my_teams = []
+        if ( response['code'] == 'OK'):
+            # The myTeams response is a list of maps
+            for team_map in response['myTeams']:
+                for team_id in team_map.keys():
+                    my_teams.append(int(team_id))
+
+        return my_teams
+
 
     def create_new_game(self, board_size, target_size,  opponent_id, me_first):
         params = {}

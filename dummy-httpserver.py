@@ -44,6 +44,8 @@ def query_handler(mypath):
         resp = handle_create_game(query)
     elif query_type == 'myGames' or query_type == 'myOpenGames':
         resp = handle_get_my_games(query)
+    elif query_type == 'myTeams':
+        resp = handle_get_my_teams(query)
     elif query_type == 'move':
         resp = handle_move(query)
     elif query_type == 'moves':
@@ -109,6 +111,22 @@ def handle_get_my_games(query):
         game_str = f"{game.player1}:{game.player2}:{game.team_symbol(game.whose_turn())}"
         my_games[game.game_id] = game_str
     resp["myGames"] = my_games
+
+    return resp
+
+
+def handle_get_my_teams(query):
+    # Much simpler than the real server's implementation - will assume same teams
+    resp = {}
+    resp["code"] = "OK"
+    my_teams = []
+    team1 = {}
+    team1[1338] = 'Team 1'
+    team2 = {}
+    team2[1361] = 'Team 1a'
+    my_teams.append(team1)
+    my_teams.append(team2)
+    resp["myTeams"] = my_teams
 
     return resp
 
