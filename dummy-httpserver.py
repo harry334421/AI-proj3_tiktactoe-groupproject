@@ -44,6 +44,8 @@ def query_handler(mypath):
         resp = handle_create_game(query)
     elif query_type == 'myGames' or query_type == 'myOpenGames':
         resp = handle_get_my_games(query)
+    elif query_type == 'myTeams':
+        resp = handle_get_my_teams(query)
     elif query_type == 'move':
         resp = handle_move(query)
     elif query_type == 'moves':
@@ -104,7 +106,29 @@ def handle_get_my_games(query):
     # Much simpler than the real server's implementation - all games include the client
     resp = {}
     resp["code"] = "OK"
-    resp["games"] = list(all_games.keys())
+    my_games = []
+    for game in all_games.values():
+        game_str = f"{game.player1}:{game.player2}:{game.team_symbol(game.whose_turn())}"
+        current_game = {}
+        current_game[game.game_id] = game_str
+        my_games.append(current_game)
+    resp["myGames"] = my_games
+
+    return resp
+
+
+def handle_get_my_teams(query):
+    # Much simpler than the real server's implementation - will assume same teams
+    resp = {}
+    resp["code"] = "OK"
+    my_teams = []
+    team1 = {}
+    team1[1338] = 'Team 1'
+    team2 = {}
+    team2[1361] = 'Team 1a'
+    my_teams.append(team1)
+    my_teams.append(team2)
+    resp["myTeams"] = my_teams
 
     return resp
 
@@ -121,7 +145,6 @@ def handle_move(query):
     # - Has the game already been won?
     resp = {}
     resp['code'] = "FAIL"
-    resp['message'] = f"Generic error for query={query}"
 
     if not 'gameId' in query or \
         not 'teamId' in query or \
@@ -201,7 +224,6 @@ def handle_request_board_map(query):
     # Assuming failure by default
     resp = {}
     resp['code'] = "FAIL"
-    resp['message'] = f"Generic error for query={query}"
 
     if not 'gameId' in query:
         resp["message"] = f"Invalid '{query_type}' command: query={query}"
@@ -222,7 +244,6 @@ def handle_request_moves(query):
     # Assuming failure by default
     resp = {}
     resp['code'] = "FAIL"
-    resp['message'] = f"Generic error for query={query}"
 
     if not 'gameId' in query:
         resp["message"] = f"Invalid '{query_type}' command: query={query}"

@@ -12,7 +12,7 @@
 # project_httpclient.py - HTTP client side of the game (our side)
 
 
-import ast
+import json
 import requests
 import urllib.parse
 
@@ -29,31 +29,59 @@ class ProjectHttpClient:
     # Constructor
     # my_id: Team ID of client (us)
     # api_key: Required API key (necessary for using class server)
-    # play_real_server: True if playing the real server, False if playing the dummy server
-    def __init__(self, my_id,  api_key,  play_real_server):
+    # play_dummy_server: True if playing the dummy server, False if playing the real server
+    def __init__(self, my_id,  api_key,  play_dummy_server):
         self.my_games = {}
         self.my_id = my_id
         self.api_key = api_key
         self.ua = fake_ua
-        if play_real_server:
-            self.server_url = real_http_server
+        if play_dummy_server:
+            self.server_url = dummy_http_server
         else:
-           self.server_url = dummy_http_server
+           self.server_url = real_http_server
+
+        # Getting teams from the server just to be sure we can make moves
+        self.teams = self.get_my_teams()
+
+    def get_my_teams(self):
+        params = {}
+        params['type'] = 'myTeams'
+
+        query = urllib.parse.urlencode(params)
+        url = f"{self.server_url}?{query}"
+
+        payload={}
+        headers = {
+            'x-api-key': self.api_key,
+            'userid': self.my_id,
+            'User-Agent': self.ua
+        }
+
+        my_teams = []
+        raw_response = requests.request("GET", url, headers=headers, data=payload)
+        try:
+            response = json.loads(raw_response.text)
+        except:
+            print(f"Server game non-JSON response: {raw_response.text}")
+            return my_teams
+
+        if ( response['code'] == 'OK'):
+            # The myTeams response is a list of maps
+            for team_map in response['myTeams']:
+                for team_id in team_map.keys():
+                    my_teams.append(int(team_id))
+
+        return my_teams
 
 
-    def create_new_game(self, board_size, target_size,  opponent_id, me_first):
+    def create_new_game(self, board_size, target_size, team1_id, team2_id):
         params = {}
         params['type'] = 'game'
         params['gameType'] = 'TTT'
         params['boardSize'] = board_size
         params['target'] = target_size
-
-        if me_first:
-            params['teamId1'] = self.my_id
-            params['teamId2'] = opponent_id
-        else:
-            params['teamId1'] = opponent_id
-            params['teamId2'] = self.my_id
+        params['teamId1'] = team1_id
+        params['teamId2'] = team2_id
 
         query = urllib.parse.urlencode(params)
         url = f"{self.server_url}?{query}"
@@ -66,17 +94,21 @@ class ProjectHttpClient:
         }
 
         raw_response = requests.request("POST", url, headers=headers, data=payload)
-        response = ast.literal_eval(raw_response.text)
+        try:
+            response = json.loads(raw_response.text)
+        except:
+            print(f"Server game non-JSON response: {raw_response.text}")
+            return
 
         if ( response['code'] == 'OK'):
             print(f"Created game {response['gameId']} successfully")
         else:
-            print(f"Failure in creating game,  message={response['message']}")
+            print(f"Failure in creating game, message={response['message']}")
 
 
     def get_my_games(self):
         params = {}
-        params['type'] = 'myGames'
+        params['type'] = 'myOpenGames'
 
         query = urllib.parse.urlencode(params)
         url = f"{self.server_url}?{query}"
@@ -88,11 +120,16 @@ class ProjectHttpClient:
             'User-Agent': self.ua
         }
 
+        my_games = []
         raw_response = requests.request("GET", url, headers=headers, data=payload)
-        response = ast.literal_eval(raw_response.text)
+        try:
+            response = json.loads(raw_response.text)
+        except:
+            print(f"Server game non-JSON response: {raw_response.text}")
+            return my_games
+
         if ( response['code'] == 'OK'):
-            my_games = response['games']
-            print(f"my_games={my_games}")
+            my_games = response['myGames']
         else:
             print(f"Failure in creating game,  message={response['message']}")
 
@@ -114,8 +151,14 @@ class ProjectHttpClient:
             'User-Agent': self.ua
         }
 
+        board_map = []
         raw_response = requests.request("GET", url, headers=headers, data=payload)
-        response = ast.literal_eval(raw_response.text)
+        try:
+            response = json.loads(raw_response.text)
+        except:
+            print(f"Server game non-JSON response: {raw_response.text}")
+            return board_map
+
         if ( response['code'] == 'OK'):
             board_map = response['output']
         else:
@@ -138,8 +181,14 @@ class ProjectHttpClient:
             'User-Agent': self.ua
         }
 
+        board = ""
         raw_response = requests.request("GET", url, headers=headers, data=payload)
-        response = ast.literal_eval(raw_response.text)
+        try:
+            response = json.loads(raw_response.text)
+        except:
+            print(f"Server game non-JSON response: {raw_response.text}")
+            return board
+
         if ( response['code'] == 'OK'):
             board = response['output']
         else:
@@ -148,12 +197,12 @@ class ProjectHttpClient:
         return board
 
 
-    def make_move(self, game_id,  row,  col):
+    def make_move(self, game_id, team_id, row, col):
         params = {}
         params['type'] = 'move'
         params['gameId'] = game_id
-        params['teamId'] = self.my_id
         params['move'] = f"{col},{row}" # Column is x coordinate and row is y coordinate
+        params['teamId'] = team_id
 
         query = urllib.parse.urlencode(params)
         url = f"{self.server_url}?{query}"
@@ -166,7 +215,12 @@ class ProjectHttpClient:
         }
 
         raw_response = requests.request("POST", url, headers=headers, data=payload)
-        response = ast.literal_eval(raw_response.text)
+        try:
+            response = json.loads(raw_response.text)
+        except:
+            print(f"Server game non-JSON response: {raw_response.text}")
+            return
+
         if not response['code'] == 'OK':
             print(f"Failure in making move, message={response['message']}")
 
@@ -187,46 +241,20 @@ class ProjectHttpClient:
             'User-Agent': self.ua
         }
 
-        raw_response = requests.request("GET", url, headers=headers, data=payload)
-        response = ast.literal_eval(raw_response.text)
         moves = [] # Empty for error checking
+
+        raw_response = requests.request("GET", url, headers=headers, data=payload)
+        try:
+            response = json.loads(raw_response.text)
+        except:
+            print(f"Server game non-JSON response: {raw_response.text}")
+            return moves
+        print(f"raw_response.text={raw_response.text}")
+
         if ( response['code'] == 'OK'):
             moves = response['moves']
         else:
             print(f"Failure in making move, message={response['message']}")
 
         return moves
-
-
-
-if __name__ == '__main__':
-    # Make sure API key and user ID are in memory
-    with open('token.txt') as f:
-        for line in f:
-            if not line.startswith("#"):
-                values = line.split(',')
-                my_id = values[0]
-                my_key = values[1].strip()
-                break
-
-    playing_real_server = False
-    phc = ProjectHttpClient(my_id,  my_key,  playing_real_server)
-    # Create a few new games
-    board_size = 3
-    target_size = 3
-    me_first = True
-    phc.create_new_game(board_size,  target_size,  9999,  me_first)
-
-    board_size += 1
-    me_first = False
-    phc.create_new_game(board_size,  target_size, 9999,   me_first)
-
-    # Make sure the server sees them
-    my_games = phc.get_my_games()
-
-    # Show the boards (the reason why we changed the sizes earlier)
-    for game_id in my_games:
-        board = phc.get_game_board(game_id)
-        print(f"Board {game_id}:")
-        print(board)
 
