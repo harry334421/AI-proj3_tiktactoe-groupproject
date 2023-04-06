@@ -63,4 +63,5 @@ If you get an error like the following,  make sure you begin with `http://` for 
     b. TTTAgent calls move maker to make moves and then post it back to the server 
     c. TTTAgent now reads a game setup file (e.g. game-TEMPLATE.json) to start the agent game-TEMPLATE.json has comment in it 
     d. TTTAgent also reads the header file (e.g. key-TEMPLATE.json) to store info on the HTTP header info, the default file header file name is key.json.
-    
+##Eric's change log 2023.04.06 - v2 
+4. Parallelized pattern check codes and packaged them into a method for TTTStrategy now.
