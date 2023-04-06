@@ -86,6 +86,43 @@ class TTTStrategy:
         sorted_moves = [move for _, move in sorted(zip(min_dist, possible_moves))]
         return sorted_moves
     
+    #Pattern Checking Driver 
+    def pattern_check(self, board, target,is_maximizing, i, j):
+        player_winning_move = {0: (-1,-1), 1:[], 2:[], 3:[], 4:[]}
+        opponent_winning_move = {0: (-1,-1), 1:[], 2:[], 3:[], 4:[]}
+        board[i][j] = 1 if is_maximizing else -1
+        #S0 (Immediate Winning): Take the winning move if available
+        if self.is_winning_move(board, target, i, j):
+            player_winning_move[0] = (i, j)
+            delta=time.time() - start_time
+            #print(f"Move time: {'{:.2f}s'.format(delta)}")
+            #print("Winning Move.")
+            return player_winning_move, opponent_winning_move
+        board[i][j] = 0
+        #S0 (Immediate Winning) Check if the opponent has a winning move
+        # Block opponent's winning move if needed
+        board[i][j] = -1 if is_maximizing else 1
+        if self.is_winning_move(board, target, i, j):
+            opponent_winning_move[0] = (i, j)
+            board[i][j] = 0
+            return player_winning_move, opponent_winning_move
+        board[i][j] = 0
+        if target>=len(board)-1:
+            return player_winning_move, opponent_winning_move
+        #Chek for Additional Patterns for Player
+        board[i][j] = 1 if is_maximizing else -1
+        tmp_immediate_winning_move=self.intermediate_winning_pattern(board, target, i, j, is_maximizing)
+        for idx in range(1, 5):
+            player_winning_move[idx]+=tmp_immediate_winning_move[idx]
+        board[i][j] = 0
+        #Chek for Additional Patterns for Opponent
+        board[i][j] = -1 if is_maximizing else 1
+        tmp_immediate_winning_move=self.intermediate_winning_pattern(board, target, i, j, not is_maximizing)
+        for idx in range(1, 5):
+            opponent_winning_move[idx]+=tmp_immediate_winning_move[idx]
+        board[i][j] = 0
+        return player_winning_move, opponent_winning_move
+    
     #Check Winning Moves in Two Steps using Known Patterns
     def intermediate_winning_pattern(self, board, target, row, col, player):
         player=1 if player else -1

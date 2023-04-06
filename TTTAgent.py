@@ -271,13 +271,14 @@ if __name__=='__main__':
             first=game_dict['Game Parameters']['First Mover']
             teamid1=game_dict['Teams']['Team 1']
             teamid2=game_dict['Teams']['Team 2']
+            evaluator=game_dict['Evaluator']    
             break
         except:
             print("Something wrong with the game setup file. Try Again")
             continue
     
     #Agent Starts 
-    tttagent=TTTAgent(board_size, target, opt, teamid1, teamid2, first, gameid=gameid)
+    tttagent=TTTAgent(board_size, target, opt, teamid1, teamid2, first, gameid=gameid, evaluator=evaluator)
     if tttagent.status==True:
         tttagent.play_game()
     else:

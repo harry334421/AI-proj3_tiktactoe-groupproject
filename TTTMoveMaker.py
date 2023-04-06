@@ -17,14 +17,19 @@ def move_worker(input_queue, result_queue):
     ttt=TTTStrategy()
     while True:
         try:
-            #ranked_moves[idx][0], ranked_moves[idx][1], board, is_maximizing, target, max_depth, alpha[max_depth], beta[max_depth], new_last_moves, evaluator
-            i, j, board, is_maximizing, target, max_depth, alpha, beta, last_moves, evaluator =input_queue.get()
-            #print(f"Get Data for Move @ ({i,j} @ Depth {max_depth})")
-            board[i][j] = 1 if is_maximizing else -1
-            score = ttt.minmax(board, 0, i, j, not is_maximizing, target, alpha, beta, max_depth, last_moves, evaluator)
-            board[i][j] = 0
-            #print(f"Scoring: {(i, j, max_depth, score)}")
-            result_queue.put((i, j, max_depth, score))
+            func_type, data = input_queue.get()
+            if func_type==1:
+                i, j, board, is_maximizing, target, max_depth, alpha, beta, last_moves, evaluator = data
+                #print(f"Get Data for Move @ ({i,j} @ Depth {max_depth})")
+                board[i][j] = 1 if is_maximizing else -1
+                score = ttt.minmax(board, 0, i, j, not is_maximizing, target, alpha, beta, max_depth, last_moves, evaluator)
+                board[i][j] = 0
+                #print(f"Scoring: {(i, j, max_depth, score)}")
+                result_queue.put((func_type, (i, j, max_depth, score)))
+            elif func_type==2:
+                board, target, is_maximizing, i, j = data
+                player_winning_move, opponent_winning_move = ttt.pattern_check(board, target, is_maximizing, i, j)
+                result_queue.put((func_type, (player_winning_move, opponent_winning_move)))
         except Exception as e:
             print(f"Exception: {e}")
         except:
@@ -41,8 +46,7 @@ def make_move(board, is_maximizing, target, last_moves, evaluator, timeout, ttt)
     best_move={}
     alpha={}
     beta={}
-    immediate_winning_move = (-1, -1)
-    intermediate_winning_move = {1:[], 2:[], 3:[], 4:[]}
+    player_winning_move = {0:(-1,-1), 1:[], 2:[], 3:[], 4:[]}
     opponent_winning_move = {0: (-1,-1), 1:[], 2:[], 3:[], 4:[]}
     '''
     Start the asychronized processes early on to save time 
@@ -68,46 +72,10 @@ def make_move(board, is_maximizing, target, last_moves, evaluator, timeout, ttt)
     idx=0
     skip=False
     #print(possible_moves)
-    
-    
-    '''
-    Back to Pattern Checking while the async processes is starting 
-    '''
-    #Check Winning and Blocking Moves
+    #Get Possible Moves
     possible_moves=ttt.get_possible_moves(board)
-    for idx, move in enumerate(possible_moves):
-        i,j=move
-        board[i][j] = 1 if is_maximizing else -1
-        #S0 (Immediate Winning): Take the winning move if available
-        if ttt.is_winning_move(board, target, i, j):
-            immediate_winning_move = (i, j)
-            delta=time.time() - start_time
-            print(f"Move time: {'{:.2f}s'.format(delta)}")
-            print("Winning Move.")
-            return immediate_winning_move
-        board[i][j] = 0
-        #S0 (Immediate Winning) Check if the opponent has a winning move
-        # Block opponent's winning move if needed
-        board[i][j] = -1 if is_maximizing else 1
-        if ttt.is_winning_move(board, target, i, j):
-            opponent_winning_move[0] = (i, j)
-            board[i][j] = 0
-            continue
-        board[i][j] = 0
-        if target>=len(board)-1:
-            continue
-        #Chek for Additional Patterns for Player
-        board[i][j] = 1 if is_maximizing else -1
-        tmp_immediate_winning_move=ttt.intermediate_winning_pattern(board, target, i, j, is_maximizing)
-        for idx in range(1, 5):
-            intermediate_winning_move[idx]+=tmp_immediate_winning_move[idx]
-        board[i][j] = 0
-        #Chek for Additional Patterns for Opponent
-        board[i][j] = -1 if is_maximizing else 1
-        tmp_immediate_winning_move=ttt.intermediate_winning_pattern(board, target, i, j, not is_maximizing)
-        for idx in range(1, 5):
-            opponent_winning_move[idx]+=tmp_immediate_winning_move[idx]
-        board[i][j] = 0
+    #Rank Possible Moves 
+    ranked_moves=ttt.rank_moves(possible_moves, last_moves)
     #First Move
     if len(possible_moves)==len(board)**2:
         if len(board)%2==0:
@@ -119,6 +87,46 @@ def make_move(board, is_maximizing, target, last_moves, evaluator, timeout, ttt)
         pool.terminate()
         pool.join()
         return (i,j)
+    
+    '''
+    Back to Pattern Checking while the async processes is starting 
+    '''
+    #Check Winning and Blocking Moves
+    
+    if len(possible_moves)<=len(board)**2-2*target+1:
+        res_counter=0
+        max_count=len(possible_moves)
+        pidx=0
+        while True:
+            if time.time()-start_time>timeout:
+                pool.terminate()
+                pool.join()
+                break
+            try:
+                if idx<max_count:
+                    iqueue.put_nowait((2, (board, target, is_maximizing, ranked_moves[pidx][0], ranked_moves[pidx][1])))
+                    pidx+=1
+            except:
+                pass
+            try:
+                func_type, (tmp_player_winning_move, tmp_opponent_winning_move)=rqueue.get_nowait()
+                if tmp_player_winning_move[0]!=(-1,-1):
+                    pool.terminate()
+                    pool.join()
+                    return tmp_player_winning_move[0]
+                else:
+                    player_winning_move[0]=tmp_player_winning_move[0]
+                    opponent_winning_move[0]=tmp_opponent_winning_move[0]
+                    for lv in range(1, 5):
+                        player_winning_move[lv]+=tmp_player_winning_move[lv]
+                        opponent_winning_move[lv]+=tmp_opponent_winning_move[lv]
+                res_counter+=1
+                if res_counter>=max_count:
+                    break
+            except:
+                pass
+    print(f"Time for pattern checking {time.time()-start_time}")
+    
     #Iterate Through Player and Opponent's winning move down the list
     # Block opponent's winning move if needed:
     if opponent_winning_move[0]!=(-1,-1):
@@ -129,13 +137,13 @@ def make_move(board, is_maximizing, target, last_moves, evaluator, timeout, ttt)
         pool.join()
         return opponent_winning_move[0]
     for idx in range(1,5):
-        if intermediate_winning_move[idx]!=[]:
+        if player_winning_move[idx]!=[]:
             delta=time.time() - start_time
             print(f"Move time: {'{:.2f}s'.format(delta)}")
             print(f"Intermediate Winning Move @ Scenario{idx}.")
             pool.terminate()
             pool.join()
-            return random.choice(intermediate_winning_move[idx])
+            return random.choice(player_winning_move[idx])
         elif opponent_winning_move[idx]!=[]:
             delta=time.time() - start_time
             print(f"Move time: {'{:.2f}s'.format(delta)}")
@@ -143,8 +151,7 @@ def make_move(board, is_maximizing, target, last_moves, evaluator, timeout, ttt)
             pool.terminate()
             pool.join()
             return random.choice(opponent_winning_move[idx])
-    #Rank Possible Moves 
-    ranked_moves=ttt.rank_moves(possible_moves, last_moves)
+    
     #print(ranked_moves)
     #print(board)
     while True:
@@ -156,7 +163,7 @@ def make_move(board, is_maximizing, target, last_moves, evaluator, timeout, ttt)
             if skip==False:
                 new_last_moves=[last_moves[-1], ranked_moves[idx]]
                 #print(f"Input Data:{(ranked_moves[idx][0], ranked_moves[idx][1], board, is_maximizing, target, max_depth, alpha[max_depth], beta[max_depth], player, new_last_moves)}")
-                iqueue.put_nowait((ranked_moves[idx][0], ranked_moves[idx][1], board, is_maximizing, target, max_depth, alpha[max_depth], beta[max_depth], new_last_moves, evaluator))
+                iqueue.put_nowait((1, (ranked_moves[idx][0], ranked_moves[idx][1], board, is_maximizing, target, max_depth, alpha[max_depth], beta[max_depth], new_last_moves, evaluator)))
                 #print(f"Input Data {possible_moves[idx]}")
                 if idx==len(ranked_moves)-1:
                     max_depth=int(max_depth+1)
@@ -174,7 +181,7 @@ def make_move(board, is_maximizing, target, last_moves, evaluator, timeout, ttt)
         except:
             pass
         try:
-            i, j, depth, score=rqueue.get_nowait()
+            func_type, (i, j, depth, score)=rqueue.get_nowait()
             score_map[depth][i][j]=score
             depth_res_count[depth]+=1
             if is_maximizing and score > alpha[depth]:

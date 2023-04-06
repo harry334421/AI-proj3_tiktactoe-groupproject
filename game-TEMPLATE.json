@@ -19,6 +19,8 @@
 				"First Mover Comments": "Choose between first mover options below, this determines game create and load process",
 				"First Mover Options": "1. TTT Agent First \n 2. Opponent First",
 				"First Mover": 1
-			}
+			},
+	"Evaluator Comment": "Choose between evaluator 1 (base) and 4 (most complex)",
+	"Evaluator":4
 }
 

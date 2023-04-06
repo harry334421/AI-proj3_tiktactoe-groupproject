@@ -51,3 +51,16 @@ If you get an error like the following,  make sure you begin with `http://` for 
 ```
     requests.exceptions.InvalidSchema: No connection adapters were found for '127.0.0.1:8080'
 ```
+
+
+
+
+#Eric's change log 2023.04.06
+1. Repackaged all strategy related functions into Class TTTStrategy in TTTStrategy.py 
+2. Move maker functions and the parallel worker is now in TTTMoveMaker.py
+3. the project_httpclient.py is now repackaged into TTTAgent.py 
+    a. TTTAgent now handles all communication with the server 
+    b. TTTAgent calls move maker to make moves and then post it back to the server 
+    c. TTTAgent now reads a game setup file (e.g. game-TEMPLATE.json) to start the agent game-TEMPLATE.json has comment in it 
+    d. TTTAgent also reads the header file (e.g. key-TEMPLATE.json) to store info on the HTTP header info, the default file header file name is key.json.
+    
