@@ -11,8 +11,8 @@
 #
 # project_httpclient.py - HTTP client side of the game (our side)
 
-
 import ast
+import json
 import requests
 import urllib.parse
 
@@ -66,6 +66,7 @@ class ProjectHttpClient:
         }
 
         raw_response = requests.request("POST", url, headers=headers, data=payload)
+        print(f"raw_response.text={raw_response.text}")
         response = ast.literal_eval(raw_response.text)
 
         if ( response['code'] == 'OK'):
@@ -76,7 +77,7 @@ class ProjectHttpClient:
 
     def get_my_games(self):
         params = {}
-        params['type'] = 'myGames'
+        params['type'] = 'myOpenGames'
 
         query = urllib.parse.urlencode(params)
         url = f"{self.server_url}?{query}"
@@ -89,10 +90,9 @@ class ProjectHttpClient:
         }
 
         raw_response = requests.request("GET", url, headers=headers, data=payload)
-        response = ast.literal_eval(raw_response.text)
+        response = json.loads(raw_response.text)#ast.literal_eval(raw_response.text)
         if ( response['code'] == 'OK'):
-            my_games = response['games']
-            print(f"my_games={my_games}")
+            my_games = response['myGames']
         else:
             print(f"Failure in creating game,  message={response['message']}")
 
@@ -115,7 +115,8 @@ class ProjectHttpClient:
         }
 
         raw_response = requests.request("GET", url, headers=headers, data=payload)
-        response = ast.literal_eval(raw_response.text)
+        print(f"raw_response.text={raw_response.text}")
+        response = json.loads(raw_response.text)#ast.literal_eval(raw_response.text)
         if ( response['code'] == 'OK'):
             board_map = response['output']
         else:
@@ -139,6 +140,7 @@ class ProjectHttpClient:
         }
 
         raw_response = requests.request("GET", url, headers=headers, data=payload)
+        print(f"raw_response.text={raw_response.text}")
         response = ast.literal_eval(raw_response.text)
         if ( response['code'] == 'OK'):
             board = response['output']
@@ -167,6 +169,7 @@ class ProjectHttpClient:
 
         raw_response = requests.request("POST", url, headers=headers, data=payload)
         response = ast.literal_eval(raw_response.text)
+        print(f"raw_response.text={raw_response.text}")
         if not response['code'] == 'OK':
             print(f"Failure in making move, message={response['message']}")
 
@@ -189,6 +192,7 @@ class ProjectHttpClient:
 
         raw_response = requests.request("GET", url, headers=headers, data=payload)
         response = ast.literal_eval(raw_response.text)
+        print(f"raw_response.text={raw_response.text}")
         moves = [] # Empty for error checking
         if ( response['code'] == 'OK'):
             moves = response['moves']

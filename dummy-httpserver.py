@@ -104,7 +104,11 @@ def handle_get_my_games(query):
     # Much simpler than the real server's implementation - all games include the client
     resp = {}
     resp["code"] = "OK"
-    resp["games"] = list(all_games.keys())
+    my_games = {}
+    for game in all_games.values():
+        game_str = f"{game.player1}:{game.player2}:{game.team_symbol(game.whose_turn())}"
+        my_games[game.game_id] = game_str
+    resp["myGames"] = my_games
 
     return resp
 
@@ -121,7 +125,6 @@ def handle_move(query):
     # - Has the game already been won?
     resp = {}
     resp['code'] = "FAIL"
-    resp['message'] = f"Generic error for query={query}"
 
     if not 'gameId' in query or \
         not 'teamId' in query or \
@@ -201,7 +204,6 @@ def handle_request_board_map(query):
     # Assuming failure by default
     resp = {}
     resp['code'] = "FAIL"
-    resp['message'] = f"Generic error for query={query}"
 
     if not 'gameId' in query:
         resp["message"] = f"Invalid '{query_type}' command: query={query}"
@@ -222,7 +224,6 @@ def handle_request_moves(query):
     # Assuming failure by default
     resp = {}
     resp['code'] = "FAIL"
-    resp['message'] = f"Generic error for query={query}"
 
     if not 'gameId' in query:
         resp["message"] = f"Invalid '{query_type}' command: query={query}"

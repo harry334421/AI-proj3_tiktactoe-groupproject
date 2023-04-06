@@ -48,7 +48,8 @@ if __name__=='__main__':
         selection = input("\nSelection: ").strip()
         if selection =='1':
             print(f"Listing games for {my_id}...\n")
-            phc.get_my_games()
+            my_games = phc.get_my_games()
+            print(f"Games for {my_id}: {my_games}")
 
         elif selection == '2':
             print(f"Creating new game for {my_id}...")
@@ -81,7 +82,10 @@ if __name__=='__main__':
             print("Getting the game map...\n")
             game_id = input("Game ID: ")
             my_map = phc.get_game_map(game_id)
-            print(my_map)
+            if my_map:
+                print(my_map)
+            else:
+                print(f"No moves yet for {game_id}")
 
         elif selection == '6':
             print("Getting the game board...\n")
