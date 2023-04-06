@@ -51,15 +51,6 @@ def make_move(board, is_maximizing, target, last_moves, evaluator, timeout, ttt)
     '''
     Start the asychronized processes early on to save time 
     '''
-    #MinMax with Iterative Deepenining
-    max_depth=0
-    depth_res_count={0:0}
-    best_move[max_depth]=[]
-    alpha[max_depth]=-float('inf')
-    beta[max_depth]=float('inf')
-    score_map={0:[[None]*len(board) for _ in range(len(board))]}
-    counter=0
-    beta_cutoff=None
     #Queue Setup
     m=Manager()
     iqueue=m.Queue(maxsize=2)
@@ -68,9 +59,7 @@ def make_move(board, is_maximizing, target, last_moves, evaluator, timeout, ttt)
     pool=Pool(cpu)
     pool_tuple=[(iqueue, rqueue) for _ in range(cpu)]
     pool.starmap_async(move_worker, pool_tuple)
-    #Start the IDS Process
-    idx=0
-    skip=False
+    
     #print(possible_moves)
     #Get Possible Moves
     possible_moves=ttt.get_possible_moves(board)
@@ -106,7 +95,7 @@ def make_move(board, is_maximizing, target, last_moves, evaluator, timeout, ttt)
                 pool.join()
                 break
             try:
-                if idx<max_count:
+                if pidx<max_count:
                     iqueue.put_nowait((2, (board, target, is_maximizing, ranked_moves[pidx][0], ranked_moves[pidx][1])))
                     pidx+=1
             except:
@@ -155,6 +144,18 @@ def make_move(board, is_maximizing, target, last_moves, evaluator, timeout, ttt)
             pool.join()
             return random.choice(opponent_winning_move[idx])
     
+    #Start the IDS Process
+    #MinMax with Iterative Deepenining
+    max_depth=0
+    depth_res_count={0:0}
+    best_move[max_depth]=[]
+    alpha[max_depth]=-float('inf')
+    beta[max_depth]=float('inf')
+    score_map={0:[[None]*len(board) for _ in range(len(board))]}
+    counter=0
+    beta_cutoff=None
+    idx=0
+    skip=False
     #print(ranked_moves)
     #print(board)
     while True:
@@ -210,7 +211,9 @@ def make_move(board, is_maximizing, target, last_moves, evaluator, timeout, ttt)
                 pool.terminate()
                 pool.join()
                 break
-
+    #print(max_depth)
+    #print(depth_res_count)
+    
     #Beta Cutoff
     if beta_cutoff is not None:
         print('Beta cutoff')

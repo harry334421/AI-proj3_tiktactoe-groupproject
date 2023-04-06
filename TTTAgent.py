@@ -130,7 +130,11 @@ class TTTAgent:
         else:
             print("I am second mover")
         print("Last moves:", last_moves)
+        row, col = 0, 0
         while True:
+            winner = self.ttt.check_winner(self.board, self.target, row, col)
+            if winner != 0 or self.ttt.is_full(self.board):
+                break
             #If we are first mover
             if self.first==True:
                 # Player 1 (Maximizing player)
@@ -161,10 +165,6 @@ class TTTAgent:
                 _, self.board=self.get_board()
                 #Set My Round to False 
                 my_move=False
-                self.print_board()
-                winner = self.ttt.check_winner(self.board, self.target, row, col)
-                if winner != 0 or self.ttt.is_full(self.board):
-                    break
             #If we are second mover
             else:
                 # Player 2 (Minimizing player)
@@ -202,12 +202,10 @@ class TTTAgent:
                 _, self.board=self.get_board()
                 #Set My Round to False 
                 my_move=False
-                #Print Board 
-                self.print_board()
+            #Print Board 
+            self.print_board()
                 
-                winner = self.ttt.check_winner(self.board, self.target, row, col)
-                if winner != 0 or self.ttt.is_full(self.board):
-                    break
+                
         #print(winner)
         if winner == 1:
             print("Player 1 (Maximizing player) wins!")
