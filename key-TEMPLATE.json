@@ -1,0 +1,9 @@
+{
+	"User-Agent": "PostmanRuntime/7.31.3",
+	"Accept":"*/*",
+	"Accept-Encoding":"gzip, deflate, br",
+	"Connection":"close",
+	"userId":"<USERID HERE>",
+	"x-api-key":"<API Key HERE>"
+}
+
