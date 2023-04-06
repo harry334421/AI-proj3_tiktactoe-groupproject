@@ -70,19 +70,14 @@ class ProjectHttpClient:
         return my_teams
 
 
-    def create_new_game(self, board_size, target_size,  opponent_id, me_first):
+    def create_new_game(self, board_size, target_size, team1_id, team2_id):
         params = {}
         params['type'] = 'game'
         params['gameType'] = 'TTT'
         params['boardSize'] = board_size
         params['target'] = target_size
-
-        if me_first:
-            params['teamId1'] = self.my_id
-            params['teamId2'] = opponent_id
-        else:
-            params['teamId1'] = opponent_id
-            params['teamId2'] = self.my_id
+        params['teamId1'] = team1_id
+        params['teamId2'] = team2_id
 
         query = urllib.parse.urlencode(params)
         url = f"{self.server_url}?{query}"
@@ -95,13 +90,12 @@ class ProjectHttpClient:
         }
 
         raw_response = requests.request("POST", url, headers=headers, data=payload)
-        print(f"raw_response.text={raw_response.text}")
-        response = ast.literal_eval(raw_response.text)
+        response = json.loads(raw_response.text)
 
         if ( response['code'] == 'OK'):
             print(f"Created game {response['gameId']} successfully")
         else:
-            print(f"Failure in creating game,  message={response['message']}")
+            print(f"Failure in creating game, message={response['message']}")
 
 
     def get_my_games(self):
@@ -169,8 +163,7 @@ class ProjectHttpClient:
         }
 
         raw_response = requests.request("GET", url, headers=headers, data=payload)
-        print(f"raw_response.text={raw_response.text}")
-        response = ast.literal_eval(raw_response.text)
+        response = json.loads(raw_response.text)
         if ( response['code'] == 'OK'):
             board = response['output']
         else:
@@ -179,12 +172,12 @@ class ProjectHttpClient:
         return board
 
 
-    def make_move(self, game_id,  row,  col):
+    def make_move(self, game_id, team_id, row, col):
         params = {}
         params['type'] = 'move'
         params['gameId'] = game_id
-        params['teamId'] = self.my_id
         params['move'] = f"{col},{row}" # Column is x coordinate and row is y coordinate
+        params['teamId'] = team_id
 
         query = urllib.parse.urlencode(params)
         url = f"{self.server_url}?{query}"
@@ -220,7 +213,7 @@ class ProjectHttpClient:
         }
 
         raw_response = requests.request("GET", url, headers=headers, data=payload)
-        response = ast.literal_eval(raw_response.text)
+        response = json.loads(raw_response.text)
         print(f"raw_response.text={raw_response.text}")
         moves = [] # Empty for error checking
         if ( response['code'] == 'OK'):

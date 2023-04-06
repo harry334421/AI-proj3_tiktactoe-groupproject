@@ -61,24 +61,41 @@ if __name__=='__main__':
             print(f"Games for {my_id}: {my_games}")
 
         elif selection == '2':
-            print(f"Creating new game for {my_id}...")
+            print("Creating new game...")
             team1_id = input("Team 1 ID: ")
             team2_id = input("Team 2 ID: ")
             board_size = input("Board size: ")
             target_size = input("Target size (consecutive symbols for win): ")
-            me_first = (team1_id == my_id)
-            if me_first:
-                opponent_id = team2_id
-            else:
-                opponent_id = team1_id
-            phc.create_new_game(board_size,  target_size, opponent_id,  me_first)
+            phc.create_new_game(board_size,  target_size, team1_id,  team2_id)
 
         elif selection == '3':
-            print(f"Playing single move for {my_id} (with upper-left as origin)...\n")
             game_id = input("Game ID: ")
+            games_list = phc.get_my_games()
+            if not game_id in games_list.keys():
+                print(f"Error: {game_id} is not in the list of current games: {games_list}")
+                # Go back into the main menu
+                continue
+
+            game_str = games_list[game_id]
+            # game_str is in format '<player1>:<player2>:<symbol of current player>'
+            game_setup = game_str.split(':')
+            current_symbol = game_setup[2]
+            if current_symbol == 'X':
+                current_team_id = int(game_setup[0])
+            else:
+                current_team_id = int(game_setup[1])
+
+            # Is it allowable to play?
+            if not current_team_id in phc.teams:
+                print(f"Error: {my_id} is not a member of the current turn's team ({current_team_id})")
+                # Go back to the main menu
+                continue
+
             row = input("Row (y-coordinate): ")
             col = input("Column (x-coordinate): ")
-            phc.make_move(game_id,  row,  col)
+            print(f"Playing single move for {current_team_id} (with upper-left as origin)...\n")
+
+            phc.make_move(game_id,  current_team_id, row,  col)
 
         elif selection == '4':
             print("Getting the move list...\n")
