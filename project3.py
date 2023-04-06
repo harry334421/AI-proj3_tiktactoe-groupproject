@@ -17,6 +17,15 @@ from project_httpclient import ProjectHttpClient
 import argparse
 
 
+LIST_GAMES = '1'
+LIST_TEAMS = '1a'
+CREATE_NEW_GAME = '2'
+PLAY_SINGLE_MOVE = '3'
+SHOW_GAME_MOVES = '4'
+SHOW_GAME_MAP = '5'
+SHOW_GAME_BOARD = '6'
+EXIT_PROJECT3 = '7'
+
 if __name__=='__main__':
     # Adding the '-d' command line argument to play against the dummy server
     parser = argparse.ArgumentParser(prog='project3',
@@ -37,14 +46,16 @@ if __name__=='__main__':
 
     phc = ProjectHttpClient(my_id,  my_key,  args.dummy)
 
+
     main_menu = {}
-    main_menu['1']="List games"
-    main_menu['2']="Create new game"
-    main_menu['3']="Play single move"
-    main_menu['4']="Show moves for existing game"
-    main_menu['5']="Show map for existing game"
-    main_menu['6']="Show board for existing game"
-    main_menu['7']="Exit"
+    main_menu[LIST_GAMES] ="List games"
+    main_menu[LIST_TEAMS] = "List teams"
+    main_menu[CREATE_NEW_GAME] ="Create new game"
+    main_menu[PLAY_SINGLE_MOVE] ="Play single move"
+    main_menu[SHOW_GAME_MOVES]="Show moves for existing game"
+    main_menu[SHOW_GAME_MAP]="Show map for existing game"
+    main_menu[SHOW_GAME_BOARD]="Show board for existing game"
+    main_menu[EXIT_PROJECT3]="Exit"
 
     while True:
         options = main_menu.keys()
@@ -55,12 +66,16 @@ if __name__=='__main__':
             print(f"{entry}. {main_menu[entry]}")
 
         selection = input("\nSelection: ").strip()
-        if selection =='1':
+
+        if selection == LIST_GAMES:
             print(f"Listing games for {my_id}...\n")
             my_games = phc.get_my_games()
             print(f"Games for {my_id}: {my_games}")
 
-        elif selection == '2':
+        elif selection == LIST_TEAMS:
+            print(f"Teams for {my_id}: {phc.teams}")
+
+        elif selection == CREATE_NEW_GAME:
             print("Creating new game...")
             team1_id = input("Team 1 ID: ")
             team2_id = input("Team 2 ID: ")
@@ -68,15 +83,22 @@ if __name__=='__main__':
             target_size = input("Target size (consecutive symbols for win): ")
             phc.create_new_game(board_size,  target_size, team1_id,  team2_id)
 
-        elif selection == '3':
+        elif selection == PLAY_SINGLE_MOVE:
             game_id = input("Game ID: ")
             games_list = phc.get_my_games()
-            if not game_id in games_list.keys():
+            game_exists = False
+            game_str = ""
+            for game_desc_map in games_list:
+                if game_id in game_desc_map.keys():
+                    game_str = game_desc_map[game_id]
+                    game_exists = True
+                    break
+
+            if not game_exists:
                 print(f"Error: {game_id} is not in the list of current games: {games_list}")
                 # Go back into the main menu
                 continue
 
-            game_str = games_list[game_id]
             # game_str is in format '<player1>:<player2>:<symbol of current player>'
             game_setup = game_str.split(':')
             current_symbol = game_setup[2]
@@ -97,14 +119,14 @@ if __name__=='__main__':
 
             phc.make_move(game_id,  current_team_id, row,  col)
 
-        elif selection == '4':
+        elif selection == SHOW_GAME_MOVES:
             print("Getting the move list...\n")
             game_id = input("Game ID: ")
             count = input("Count (number of moves in the past to get): ")
             my_moves = phc.get_moves(game_id,  count)
             print(my_moves)
 
-        elif selection == '5':
+        elif selection == SHOW_GAME_MAP:
             print("Getting the game map...\n")
             game_id = input("Game ID: ")
             my_map = phc.get_game_map(game_id)
@@ -113,13 +135,13 @@ if __name__=='__main__':
             else:
                 print(f"No moves yet for {game_id}")
 
-        elif selection == '6':
+        elif selection == SHOW_GAME_BOARD:
             print("Getting the game board...\n")
             game_id = input("Game ID: ")
             my_board = phc.get_game_board(game_id)
             print(my_board)
 
-        elif selection == '7':
+        elif selection == EXIT_PROJECT3:
             print("Exiting...")
             break
 
@@ -127,14 +149,3 @@ if __name__=='__main__':
             print(f"{selection} is invalid")
 
         print("\n")
-
-# Create a few new games
-#board_size = 3
-#target_size = 3
-#me_first = True
-#phc.create_new_game(board_size,  target_size,  9999,  me_first)
-#
-#game_id = phc.get_my_games()[0]
-
-# Now make moves using phc.make_move(game_id,row,col)
-# ...

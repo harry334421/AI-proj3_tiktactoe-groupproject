@@ -106,10 +106,12 @@ def handle_get_my_games(query):
     # Much simpler than the real server's implementation - all games include the client
     resp = {}
     resp["code"] = "OK"
-    my_games = {}
+    my_games = []
     for game in all_games.values():
         game_str = f"{game.player1}:{game.player2}:{game.team_symbol(game.whose_turn())}"
-        my_games[game.game_id] = game_str
+        current_game = {}
+        current_game[game.game_id] = game_str
+        my_games.append(current_game)
     resp["myGames"] = my_games
 
     return resp
