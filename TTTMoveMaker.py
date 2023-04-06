@@ -74,8 +74,7 @@ def make_move(board, is_maximizing, target, last_moves, evaluator, timeout, ttt)
     #print(possible_moves)
     #Get Possible Moves
     possible_moves=ttt.get_possible_moves(board)
-    #Rank Possible Moves 
-    ranked_moves=ttt.rank_moves(possible_moves, last_moves)
+    
     #First Move
     if len(possible_moves)==len(board)**2:
         if len(board)%2==0:
@@ -87,6 +86,10 @@ def make_move(board, is_maximizing, target, last_moves, evaluator, timeout, ttt)
         pool.terminate()
         pool.join()
         return (i,j)
+    
+    #Rank Possible Moves 
+    ranked_moves=ttt.rank_moves(possible_moves, last_moves)
+    
     
     '''
     Back to Pattern Checking while the async processes is starting 
