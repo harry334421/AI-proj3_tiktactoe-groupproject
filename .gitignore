@@ -18,3 +18,5 @@ to_delete/
 token.txt
 *.swp
 *.e4p
+game.json
+key.json

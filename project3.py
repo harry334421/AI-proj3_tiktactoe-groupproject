@@ -101,13 +101,20 @@ if __name__=='__main__':
 
             # game_str is in format '<player1>:<player2>:<symbol of current player>'
             game_setup = game_str.split(':')
-            current_symbol = game_setup[2]
-            if current_symbol == 'X':
-                current_team_id = int(game_setup[0])
-            else:
-                current_team_id = int(game_setup[1])
+            team1_id = int(game_setup[0])
+            team2_id = int(game_setup[1])
 
-            # Is it allowable to play?
+            # Good chance that no moves exist yet - shouldn't be an error
+            last_move_raw = phc.get_moves(game_id, 1,  quiet=True)
+            current_team_id = team1_id
+            # If there are no moves yet, it is the first player's turn by default
+            if last_move_raw:
+                last_move = last_move_raw[0]
+                # Switch players if Player 1 just went
+                if int(last_move['teamId']) == current_team_id:
+                    current_team_id = team2_id
+
+            # Is it allowable to play? Am I a part of the team playing?
             if not current_team_id in phc.teams:
                 print(f"Error: {my_id} is not a member of the current turn's team ({current_team_id})")
                 # Go back to the main menu
