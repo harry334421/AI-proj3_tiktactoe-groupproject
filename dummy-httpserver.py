@@ -15,7 +15,7 @@
 from game import Game
 from strategy_random import StrategyRandom
 
-from bottle import request,  route,  run
+from bottle import get, post,  request,  run
 import json
 import urllib.parse
 
@@ -27,8 +27,7 @@ all_games = {}
 server_id = 9999
 strategy = StrategyRandom()
 
-# Handle GET calls
-@route('<mypath:path>', method=['GET'])
+@get('<mypath:path>')
 def get_query_handler(mypath):
     global query_counter
 
@@ -58,7 +57,7 @@ def get_query_handler(mypath):
 
 
 # Handle POST calls
-@route('<mypath:path>', method=['POST'])
+@post('<mypath:path>')
 def post_handler(mypath):
     global query_counter
 
@@ -196,8 +195,11 @@ def handle_move(query):
 
     print(f"query move={query['move']}")
     move_list = query['move'].split(',')
-    row = int(move_list[1])
-    col = int(move_list[0])
+    move_x = int(move_list[0])
+    move_y = int(move_list[1])
+
+    row = move_x
+    col = move_y
     if not game_id in all_games.keys():
         resp["message"] = f"Game '{game_id}' does not exist: query={query}"
         return resp

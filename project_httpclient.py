@@ -58,7 +58,7 @@ class ProjectHttpClient:
         }
 
         my_teams = []
-        raw_response = requests.request("GET", url, headers=headers, data=payload)
+        raw_response = requests.get(url, headers=headers, data=payload)
         try:
             response = json.loads(raw_response.text)
         except:
@@ -90,7 +90,7 @@ class ProjectHttpClient:
         }
         files = []
 
-        raw_response = requests.request("POST", self.server_url, headers=headers, data=payload,  files=files)
+        raw_response = requests.post(self.server_url, headers=headers, data=payload,  files=files)
         try:
             response = json.loads(raw_response.text)
         except:
@@ -120,7 +120,7 @@ class ProjectHttpClient:
         }
 
         my_games = []
-        raw_response = requests.request("GET", url, headers=headers, data=payload)
+        raw_response = requests.get(url, headers=headers, data=payload)
         try:
             response = json.loads(raw_response.text)
         except:
@@ -154,7 +154,7 @@ class ProjectHttpClient:
         }
 
         board_map = []
-        raw_response = requests.request("GET", url, headers=headers, data=payload)
+        raw_response = requests.get(url, headers=headers, data=payload)
         try:
             response = json.loads(raw_response.text)
         except:
@@ -187,7 +187,7 @@ class ProjectHttpClient:
         }
 
         board = ""
-        raw_response = requests.request("GET", url, headers=headers, data=payload)
+        raw_response = requests.get(url, headers=headers, data=payload)
         try:
             response = json.loads(raw_response.text)
         except:
@@ -218,7 +218,7 @@ class ProjectHttpClient:
         }
         files = []
 
-        raw_response = requests.request("POST", self.server_url, headers=headers, data=payload, files=files)
+        raw_response = requests.post(self.server_url, headers=headers, data=payload, files=files)
         try:
             response = json.loads(raw_response.text)
         except:
@@ -249,7 +249,7 @@ class ProjectHttpClient:
         }
 
         moves = [] # Empty for error checking
-        raw_response = requests.request("GET", url, headers=headers, data=payload)
+        raw_response = requests.get(url, headers=headers, data=payload)
         try:
             response = json.loads(raw_response.text)
         except:
