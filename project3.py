@@ -139,7 +139,7 @@ def play_single_move():
 # Is it the turn of a team I am part of?
 def is_my_turn(game_id,  server_player1,  server_player2):
     my_turn = False
-    my_moves = phc.get_moves(game_id,  2)
+    my_moves = phc.get_moves(game_id,  1)
     current_team_id = -1
     current_team_value = 0
     last_move = []
@@ -165,10 +165,11 @@ def is_my_turn(game_id,  server_player1,  server_player2):
         print(f"I can make a move because Team {current_team_id} includes me (User {phc.my_user_id})")
         my_turn = True
     else:
-        print(f"I (User {phc.my_user_id}) need to wait until {current_team_id} makes a move")
+        print(f"current_team_id={current_team_id},  phc.teams={phc.teams}")
+        print(f"I (User {phc.my_user_id}) need to wait until Team {current_team_id} makes a move")
         my_turn = False
 
-    return my_turn,  current_team_id, current_team_value,  my_moves
+    return my_turn,  current_team_id, current_team_value,  last_move
 
 
 #String to NP Array
@@ -275,7 +276,7 @@ def play_existing_game():
             return
 
     while True:
-        my_turn,  current_team_id, current_team_value,  prev_moves = is_my_turn(game_id,  server_player1,  server_player2)
+        my_turn, current_team_id, current_team_value,  prev_move = is_my_turn(game_id,  server_player1,  server_player2)
         if not my_turn:
             delay = 10
             print(f"Waiting for {delay} seconds")
@@ -287,10 +288,9 @@ def play_existing_game():
         board = string_to_board(boardstr)
 
         # If there are existing moves, make sure the game is still going
-        if prev_moves:
-            prev_move = prev_moves[0]
-            row = int(prev_move['moveY'])
-            col = int(prev_move['moveX'])
+        if prev_move:
+            row = int(prev_move['moveX'])
+            col = int(prev_move['moveY'])
             current_winner = strategy.check_winner(board, target, row,  col)
             if current_winner != 0:
                 # Game has been won already
@@ -306,12 +306,13 @@ def play_existing_game():
         #timeout = 30
         #evaluator = 4
         #is_maximizing = (current_team_id == server_player1)
-        #row, col = mm.make_move(board, is_maximizing, target, prev_moves, evaluator, timeout)
+        #last_moves = phc.get_moves(game_id,  1) # make_move requires last two moves
+        #row, col = mm.make_move(board, is_maximizing, target, last_moves, evaluator, timeout)
         row, col = select_unused_coords(board)
         print(f"About to try row={row}, col={col}")
         phc.make_move(game_id,  current_team_id, row,  col)
 
-        time.sleep(7)
+        time.sleep(5)
 
 
 def show_game_moves():

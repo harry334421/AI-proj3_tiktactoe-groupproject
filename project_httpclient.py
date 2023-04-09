@@ -27,7 +27,7 @@ class ProjectHttpClient:
     def __init__(self, header_file,  play_dummy_server):
         self.my_games = {}
         self.header = json.load(open(header_file,'r'))
-        self.my_user_id = self.header['userId']
+        self.my_user_id = int(self.header['userId'])
         if play_dummy_server:
             self.server_url = dummy_http_server
         else:
@@ -171,7 +171,8 @@ class ProjectHttpClient:
         payload = {}
         payload['type'] = 'move'
         payload['gameId'] = game_id
-        payload['move'] = f"{col},{row}" # Column is x coordinate and row is y coordinate
+        # Server marks moves as (x,y) but acts backwards if (col,row) given
+        payload['move'] = f"{row},{col}"
         payload['teamId'] = team_id
 
         raw_response = requests.post(self.server_url, headers=self.header, data=payload, files=[])

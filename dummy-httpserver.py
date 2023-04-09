@@ -192,8 +192,9 @@ def handle_move(query):
 
     print(f"query move={query['move']}")
     move_list = query['move'].split(',')
-    move_x = int(move_list[0])
-    move_y = int(move_list[1])
+    # Going from (x,y) to (row, column) ordering
+    move_x = int(move_list[1])
+    move_y = int(move_list[0])
 
     row = move_y
     col = move_x
