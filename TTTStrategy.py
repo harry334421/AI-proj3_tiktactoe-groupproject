@@ -81,8 +81,8 @@ def rank_moves(possible_moves, last_moves):
         last_move0 = (lm0x, lm0y)
         last_move1 = (int(last_moves[1]['moveX']),  int(last_moves[1]['moveY']))
         print(f"lastmove0={last_move0}, lastmove1={last_move1}")
-        dist1.append(max(abs(move[0]-last_move0[0]),abs(move[1]-last_move0[1])))
-        dist2.append(max(abs(move[0]-last_move1[0]),abs(move[1]-last_move1[1])))
+        dist1.append([max(abs(move[0]-last_move0[0])),abs(move[1]-last_move0[1])])
+        dist2.append([max(abs(move[0]-last_move1[0])),abs(move[1]-last_move1[1])])
 
     #dist1=[max(abs(move[0]-last_moves[0]),abs(move[1]-last_moves[1])) for move in possible_moves]
     #print(dist1)
