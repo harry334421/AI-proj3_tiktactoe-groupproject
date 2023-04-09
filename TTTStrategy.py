@@ -68,10 +68,25 @@ def is_winning_move(board, target, row, col):
 #Rank Moves that is closer to last moves
 def rank_moves(possible_moves, last_moves):
     last_moves=last_moves+last_moves if len(last_moves)==1 else last_moves
-    #print(possible_moves)
-    dist1=[max(abs(move[0]-last_moves[0][0]),abs(move[1]-last_moves[0][1])) for i, move in enumerate(possible_moves)]
+    #print(f"possible_moves={possible_moves},last_moves={last_moves}")
+    dist1 = []
+    dist2 = []
+
+    # TODO - Exceptions here:
+    # Exception: tuple indices must be integers or slices, not str
+    for move in possible_moves:
+        #print(f"move={move}, last_moves[0]={last_moves[0]},  last_moves[1]={last_moves[1]}")
+        lm0x = int(last_moves[0]['moveX'])
+        lm0y = int(last_moves[0]['moveY'])
+        last_move0 = (lm0x, lm0y)
+        last_move1 = (int(last_moves[1]['moveX']),  int(last_moves[1]['moveY']))
+        print(f"lastmove0={last_move0}, lastmove1={last_move1}")
+        dist1.append(max(abs(move[0]-last_move0[0]),abs(move[1]-last_move0[1])))
+        dist2.append(max(abs(move[0]-last_move1[0]),abs(move[1]-last_move1[1])))
+
+    #dist1=[max(abs(move[0]-last_moves[0]),abs(move[1]-last_moves[1])) for move in possible_moves]
     #print(dist1)
-    dist2=[max(abs(move[0]-last_moves[1][0]),abs(move[1]-last_moves[1][1])) for i, move in enumerate(possible_moves)]
+    #dist2=[max(abs(move[0]-last_moves[1][0]),abs(move[1]-last_moves[1][1])) for move in enumerate(possible_moves)]
     #print(dist2)
     min_dist=[min(d1,d2) for d1, d2 in zip(dist1, dist2)]
     '''

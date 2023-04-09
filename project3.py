@@ -14,7 +14,7 @@
 
 from project_httpclient import ProjectHttpClient
 import TTTStrategy as strategy
-#import TTTMoveMaker as mm
+import TTTMoveMaker as mm
 
 import argparse
 import numpy as np
@@ -303,12 +303,12 @@ def play_existing_game():
 
         # Since the game hasn't finished, make a move
         # TODO - Use the TTTStrategy, TTTMover...
-        #timeout = 30
-        #evaluator = 4
-        #is_maximizing = (current_team_id == server_player1)
-        #last_moves = phc.get_moves(game_id,  1) # make_move requires last two moves
-        #row, col = mm.make_move(board, is_maximizing, target, last_moves, evaluator, timeout)
-        row, col = select_unused_coords(board)
+        timeout = 30
+        evaluator = 4
+        is_maximizing = (current_team_id == server_player1)
+        last_moves = phc.get_moves(game_id,  1) # make_move requires last two moves
+        row, col = mm.make_move(board, is_maximizing, target, last_moves, evaluator, timeout)
+        #row, col = select_unused_coords(board)
         print(f"About to try row={row}, col={col}")
         phc.make_move(game_id,  current_team_id, row,  col)
 
