@@ -13,10 +13,10 @@
 
 
 from game import Game
-from strategy_random import StrategyRandom
 
 from bottle import get, post,  request,  run
 import json
+import random
 import urllib.parse
 
 
@@ -25,7 +25,6 @@ game_id_counter = 2000
 move_id_counter = 0
 all_games = {}
 server_id = 9999
-strategy = StrategyRandom()
 
 @get('<mypath:path>')
 def get_query_handler(mypath):
@@ -124,7 +123,7 @@ def handle_create_game(query):
 
             # Make the initial move if it is the server's turn
             if server_id == int(new_game.player1):
-                row, col = strategy.select_next_move_coords(new_game.ttt, server_id==new_game.player1)
+                row, col = select_unused_coords(new_game.ttt.board)
                 new_game.make_move(server_id, row, col)
 
             resp = {}
@@ -198,8 +197,8 @@ def handle_move(query):
     move_x = int(move_list[0])
     move_y = int(move_list[1])
 
-    row = move_x
-    col = move_y
+    row = move_y
+    col = move_x
     if not game_id in all_games.keys():
         resp["message"] = f"Game '{game_id}' does not exist: query={query}"
         return resp
@@ -218,7 +217,7 @@ def handle_move(query):
         return resp
 
     if current_game.is_game_over():
-        resp["message"] = f"Game already over: winner={current_game.winner()},  query={query}"
+        resp["message"] = f"Game already over: winner={current_game.get_winner()},  query={query}"
         return resp
 
     # Passed all the tests, can finally make the move
@@ -234,7 +233,7 @@ def handle_move(query):
             server_id = int(current_game.player2)
         else:
             server_id = int(current_game.player1)
-        row, col = strategy.select_next_move_coords(current_game.ttt,  server_id==current_game.player1)
+        row, col = select_unused_coords(current_game.ttt.board)
         current_game.make_move(server_id, row, col)
 
     return resp
@@ -306,6 +305,19 @@ def handle_request_moves(query):
     resp['moves'] = wanted_moves
 
     return resp
+
+# Quickly find an usused space (for testing mostly)
+def select_unused_coords(board):
+    board_size = board.shape[0]
+    row = 0
+    col = 0
+    while True:
+        row = random.randrange(board_size)
+        col = random.randrange(board_size)
+        if board[row][col] == 0:
+            break
+
+    return row, col
 
 
 if __name__ == "__main__":

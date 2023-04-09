@@ -92,9 +92,9 @@ class Game:
 
     def get_winner(self):
         winner_id = -1 # Invalid winner ID to start
-        if self.ttt.winner == 1:
+        if self.ttt.winner_value == 1:
             winner_id = self.player1
-        elif self.ttt.winner == -1:
+        elif self.ttt.winner_value == -1:
             winner_id = self.player2
 
         return winner_id

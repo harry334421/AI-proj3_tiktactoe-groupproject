@@ -13,7 +13,9 @@
 
 
 from game import Game
+import TTTStrategy as strategy
 
+import numpy as np
 import unittest
 
 
@@ -31,6 +33,48 @@ class Tester( unittest.TestCase ):
         self.assertEqual(game2.whose_turn(), other_id)
         game2.make_move(other_id, 0, 0)
         self.assertEqual(game2.whose_turn(), my_id)
+
+    def test_check_winner(self):
+        board_size = 3
+        target = 3
+        board=np.array([[0]*board_size for i in range(board_size)])
+
+        # Player 2 (minimizing) should win from lower left to upper right
+        board[0] = [1,  1,  -1]
+        board[1] = [1,  -1,  1]
+        board[2] = [-1,  0,  0]
+
+        self.assertEqual(-1, strategy.check_winner(board, target, 2, 0))
+        self.assertEqual(-1, strategy.check_winner(board, target, 1, 1))
+        self.assertEqual(-1, strategy.check_winner(board, target, 0, 2))
+
+        # Player 2 (minimizing) should win from upper left to lower right
+        board[0] = [-1,  1,  0]
+        board[1] = [1,  -1, 1]
+        board[2] = [1,  0, -1]
+
+        self.assertEqual(-1, strategy.check_winner(board, target, 0, 0))
+        self.assertEqual(-1, strategy.check_winner(board, target, 1, 1))
+        self.assertEqual(-1, strategy.check_winner(board, target, 2, 2))
+
+        # Player 1 (maximizing) should win from the center column
+        board[0] = [-1,  1,  -1]
+        board[1] = [0,  1,  0]
+        board[2] = [0,  1,  0]
+
+        self.assertEqual(1, strategy.check_winner(board, target, 0, 1))
+        self.assertEqual(1, strategy.check_winner(board, target, 1, 1))
+        self.assertEqual(1, strategy.check_winner(board, target, 2, 1))
+
+        # Player 2 (minimizing) should win from the top row
+        board[0] = [-1,  -1,  -1]
+        board[1] = [0,  1,  0]
+        board[2] = [0,  1,  1]
+
+        self.assertEqual(-1, strategy.check_winner(board, target, 0, 0))
+        self.assertEqual(-1, strategy.check_winner(board, target, 0, 1))
+        self.assertEqual(-1, strategy.check_winner(board, target, 0, 2))
+
 
 if __name__ == '__main__':
   unittest.main()

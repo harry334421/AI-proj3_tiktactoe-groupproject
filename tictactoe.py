@@ -25,7 +25,7 @@ class TicTacToe:
         self.player1_turn = True
         self.moves = []
         self.game_over = False
-        self.winner_id = -1 # Invalid to start
+        self.winner_value = 0 # Draw to start
 
 
     # Visual representation of the board
@@ -38,13 +38,12 @@ class TicTacToe:
         boardstr = str()
         for row in range(rows):
             for col in range(cols):
-                boardstr += " "
                 if self.board[row][col] == 1:
                     boardstr += "X"
                 elif self.board[row][col] == -1:
                     boardstr += "O"
                 else:
-                    boardstr += "_"
+                    boardstr += "-"
 
             boardstr += "\n"
 
@@ -132,10 +131,10 @@ class TicTacToe:
 
         self.board[row][col] = piece_value
         self.player1_turn = not self.player1_turn
-        winner_id = self.check_winner(self.board,  self.target)
-        if winner_id != 0:
+        winner_value = self.check_winner(self.board,  self.target)
+        if winner_value != 0:
             self.game_over = True
-            self.winner_id = winner_id
+            self.winner_value = winner_value
         return row, col
 
 

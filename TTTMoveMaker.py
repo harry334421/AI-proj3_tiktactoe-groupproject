@@ -1,13 +1,13 @@
 '''
-Dependencies 
+Dependencies
 '''
 import random
 from multiprocessing import Manager, Queue, Pool, cpu_count
 from TTTStrategy import TTTStrategy
-import time 
+import time
 
 '''
-Functions 
+Functions
 '''
 
 '''
@@ -28,7 +28,7 @@ def move_worker(input_queue, result_queue):
                 result_queue.put((func_type, (i, j, max_depth, score)))
             elif func_type==2:
                 board, target, is_maximizing, i, j = data
-                player_winning_move, opponent_winning_move = ttt.pattern_check(board, target, is_maximizing, i, j)
+                player_winning_move, opponent_winning_move = ttt.pattern_check(board, target, is_maximizing, i, j,  start_time)
                 result_queue.put((func_type, (player_winning_move, opponent_winning_move)))
         except Exception as e:
             print(f"Exception: {e}")
@@ -37,19 +37,18 @@ def move_worker(input_queue, result_queue):
             pass
 
 '''
-Function to Determine a Move 
+Function to Determine a Move
 '''
 def make_move(board, is_maximizing, target, last_moves, evaluator, timeout, ttt):
     cpu=cpu_count()-1
     start_time = time.time()
-    best_score={}
     best_move={}
     alpha={}
     beta={}
     player_winning_move = {0:(-1,-1), 1:[], 2:[], 3:[], 4:[]}
     opponent_winning_move = {0: (-1,-1), 1:[], 2:[], 3:[], 4:[]}
     '''
-    Start the asychronized processes early on to save time 
+    Start the asychronized processes early on to save time
     '''
     #Queue Setup
     m=Manager()
@@ -59,11 +58,11 @@ def make_move(board, is_maximizing, target, last_moves, evaluator, timeout, ttt)
     pool=Pool(cpu)
     pool_tuple=[(iqueue, rqueue) for _ in range(cpu)]
     pool.starmap_async(move_worker, pool_tuple)
-    
+
     #print(possible_moves)
     #Get Possible Moves
     possible_moves=ttt.get_possible_moves(board)
-    
+
     #First Move
     if len(possible_moves)==len(board)**2:
         if len(board)%2==0:
@@ -75,16 +74,16 @@ def make_move(board, is_maximizing, target, last_moves, evaluator, timeout, ttt)
         pool.terminate()
         pool.join()
         return (i,j)
-    
-    #Rank Possible Moves 
+
+    #Rank Possible Moves
     ranked_moves=ttt.rank_moves(possible_moves, last_moves)
-    
-    
+
+
     '''
-    Back to Pattern Checking while the async processes is starting 
+    Back to Pattern Checking while the async processes is starting
     '''
     #Check Winning and Blocking Moves
-    
+
     if len(possible_moves)<=len(board)**2-2*target+1:
         res_counter=0
         max_count=len(possible_moves)
@@ -96,7 +95,7 @@ def make_move(board, is_maximizing, target, last_moves, evaluator, timeout, ttt)
                 break
             try:
                 if pidx<max_count:
-                    iqueue.put_nowait((2, (board, target, is_maximizing, ranked_moves[pidx][0], ranked_moves[pidx][1])))
+                    iqueue.put_nowait((2, (board, target, is_maximizing, ranked_moves[pidx][0], ranked_moves[pidx][1], start_time)))
                     pidx+=1
             except:
                 pass
@@ -118,7 +117,7 @@ def make_move(board, is_maximizing, target, last_moves, evaluator, timeout, ttt)
             except:
                 pass
     print(f"Time for pattern checking {time.time()-start_time}")
-    
+
     #Iterate Through Player and Opponent's winning move down the list
     # Block opponent's winning move if needed:
     if opponent_winning_move[0]!=(-1,-1):
@@ -143,7 +142,7 @@ def make_move(board, is_maximizing, target, last_moves, evaluator, timeout, ttt)
             pool.terminate()
             pool.join()
             return random.choice(opponent_winning_move[idx])
-    
+
     #Start the IDS Process
     #MinMax with Iterative Deepenining
     max_depth=0
@@ -152,7 +151,6 @@ def make_move(board, is_maximizing, target, last_moves, evaluator, timeout, ttt)
     alpha[max_depth]=-float('inf')
     beta[max_depth]=float('inf')
     score_map={0:[[None]*len(board) for _ in range(len(board))]}
-    counter=0
     beta_cutoff=None
     idx=0
     skip=False
@@ -213,7 +211,7 @@ def make_move(board, is_maximizing, target, last_moves, evaluator, timeout, ttt)
                 break
     #print(max_depth)
     #print(depth_res_count)
-    
+
     #Beta Cutoff
     if beta_cutoff is not None:
         print('Beta cutoff')
@@ -230,14 +228,14 @@ def make_move(board, is_maximizing, target, last_moves, evaluator, timeout, ttt)
         if depth_res_count[key]==len(possible_moves):
             res_depth=key
             break
-    
+
     delta=time.time() - start_time
     print(f"Move time: {'{:.2f}s'.format(delta)}")
-    
+
     print(f"Best move @ depth {res_depth}")
     '''
     print(f'Best Score: {alpha[res_depth] if is_maximizing else beta[res_depth]}')
-    
+
     print(f'Best Moves: \n{best_move[res_depth]}')
     print(f'Score map:')
     for i,row in enumerate(score_map[res_depth]):

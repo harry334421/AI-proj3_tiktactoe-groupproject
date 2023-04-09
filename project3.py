@@ -13,8 +13,12 @@
 
 
 from project_httpclient import ProjectHttpClient
+import TTTStrategy as strategy
 
 import argparse
+import numpy as np
+import random
+import time
 
 
 LIST_GAMES = '1'
@@ -38,6 +42,10 @@ main_menu[SHOW_GAME_MAP]="Show map for existing game"
 main_menu[SHOW_GAME_BOARD]="Show board for existing game"
 main_menu[EXIT_PROJECT3]="Exit"
 
+my_games = []
+my_game_ids = []
+
+
 def read_token_file():
     my_id = 0
     my_key = ""
@@ -58,9 +66,25 @@ def print_main_menu():
         print(f"{entry}. {main_menu[entry]}")
 
 
+def update_internal_gamelist():
+    # Updating  copies
+    global my_games
+    global my_game_ids
+
+    my_games_raw = phc.get_my_games()
+    my_games = {}
+    my_game_ids = []
+    for gamemap in my_games_raw:
+        # Single ID in each map
+        game_id = int(list(gamemap.keys())[0])
+        game_str = list(gamemap.values())[0]
+        my_game_ids.append(game_id)
+        my_games[game_id] = game_str
+
+
 def list_games():
     print(f"Listing games for {my_id}...\n")
-    my_games = phc.get_my_games()
+    update_internal_gamelist()
     print(f"Games for {my_id}: {my_games}")
 
 
@@ -121,12 +145,191 @@ def play_single_move():
     phc.make_move(game_id,  current_team_id, row,  col)
 
 
+# Is it the turn of a team I am part of?
+def is_my_turn(game_id,  server_player1,  server_player2):
+    my_turn = False
+    my_moves = phc.get_moves(game_id,  1)
+    current_team_id = -1
+    last_move = []
+
+    if not my_moves:
+        print(f"It is Player 1 ({server_player1})'s turn)")
+        current_team_id = server_player1
+    else:
+        last_move = my_moves[0]
+        last_team_id = int(last_move['teamId'])
+        if (last_team_id == server_player1):
+            print(f"It is Player 2 ({server_player2})'s turn")
+            current_team_id = server_player2
+        else:
+            print(f"It is Player 1 ({server_player1})'s turn")
+            current_team_id = server_player1
+
+    # Am I allowed to play?
+    if current_team_id in phc.teams:
+        print(f"I can make a move because {current_team_id} includes me")
+        my_turn = True
+    else:
+        print(f"I need to wait until {current_team_id} makes a move")
+        my_turn = False
+
+    return my_turn,  current_team_id,  last_move
+
+
+#String to NP Array
+def string_to_board(boardstr):
+    ele_dict={"X":-1, "O":1, "_":0, "-":0}
+    rows=boardstr.split("\n")
+    rows.remove("")
+    if " " in rows[0]:
+        board=np.array([[ele_dict[ele] for ele in row.split(" ")] for idx, row in enumerate(rows)])
+    else:
+        board=np.array([[ele_dict[ele] for ele in [*row]] for idx, row in enumerate(rows)])
+    return board
+
+
+# Are there any empty spots left on the board?
+def is_full(board):
+    return all(0 not in row for row in board)
+
+
+def print_board(board):
+    for row in board:
+        print(" ".join(["X" if x == -1 else "O" if x == 1 else "_" for x in row]))
+    print()
+
+
+# Quickly find an usused space (for testing mostly)
+def select_unused_coords(board):
+    board_size = board.shape[0]
+    row = 0
+    col = 0
+    while True:
+        row = random.randrange(board_size)
+        col = random.randrange(board_size)
+        if board[row][col] == 0:
+            break
+    print(f"Selected row={row}, col={col} for board =")
+    print_board(board)
+
+    return row, col
+
+
+def is_game_over(board, target, row, col):
+    game_over = False
+    winner_value = 0
+
+    current_winner = strategy.check_winner(board, target, row,  col)
+    if current_winner != 0:
+        # Game has been won already
+        game_over = True
+        winner_value = current_winner
+
+    elif current_winner == 0 and strategy.is_full(board):
+        # Nobody won and nobody will
+        game_over = True
+        winner_value = 0
+
+    return game_over,  winner_value
+
+
+def print_winner(winner_value,  server_player1,  server_player2, game_id):
+    if winner_value == 1:
+        # Maximizing player won
+        print(f"Player 1 ({server_player1}) won game {game_id}")
+    elif winner_value == -1:
+        # Minimizing player won
+        print(f"Player 2 ({server_player2}) won game {game_id}")
+    elif winner_value == 0:
+        print(f"Draw for game {game_id}")
+
+
+def play_existing_game():
+    print("Getting the move list...\n")
+
+    game_id = int(input("Game ID: "))
+    if not game_id in my_game_ids:
+        update_internal_gamelist()
+
+    if not game_id in my_game_ids:
+        print(f"Error: {game_id} is not in the list of existing games {my_game_ids}")
+        return
+
+    target = int(input("Target size: "))
+
+    # Figure out player identities
+    server_players_raw = my_games[game_id].split(':')
+    server_player1 = int(server_players_raw[0]) # Maximizing player
+    server_player2 = int(server_players_raw[1]) # Minimizing player
+    print(f"Server: For game {game_id}, player1={server_player1}, player2={server_player2}")
+
+    existing_moves = phc.get_moves(game_id,  1)
+    # If a move exists, it is possible that the game is over already
+    if existing_moves:
+        last_move = existing_moves[0]
+        last_x = int(last_move['moveX'])
+        last_y = int(last_move['moveY'])
+        last_row = last_y
+        last_col = last_x
+        print(f"Checking last move of row={last_row},col={last_col}")
+        boardstr = phc.get_game_board(game_id)
+        board = string_to_board(boardstr)
+        current_winner = strategy.check_winner(board, target, last_row,  last_col)
+        if current_winner != 0:
+            print_winner(current_winner, server_player1,  server_player2,  game_id)
+            return
+
+    while True:
+        my_turn,  current_team_id,  prev_move = is_my_turn(game_id,  server_player1,  server_player2)
+        if not my_turn:
+            delay = 10
+            print(f"Waiting for {delay} seconds")
+            time.sleep(delay)
+        else:
+            boardstr = phc.get_game_board(game_id)
+            board = string_to_board(boardstr)
+            # TODO - Get the actual target
+            target = board.shape[0]
+
+            # If there are existing moves, make sure the game is still going
+            if prev_move:
+                row = int(prev_move['moveY'])
+                col = int(prev_move['moveX'])
+                current_winner = strategy.check_winner(board, target, row,  col)
+                if current_winner != 0:
+                    # Game has been won already
+                    print_winner(current_winner,  server_player1,  server_player2,  game_id)
+                    break
+                elif current_winner == 0 and strategy.is_full(board):
+                    # Nobody won and nobody will
+                    print_winner(current_winner,  server_player1,  server_player2,  game_id)
+                    break
+
+            # Since the game hasn't finished, make a move
+            # TODO - Use the TTTStrategy, TTTMover...
+            row, col = select_unused_coords(board)
+            phc.make_move(game_id,  current_team_id, row,  col)
+
+            # Did this last move win the game?
+            current_winner = strategy.check_winner(board, target, row,  col)
+            if current_winner != 0:
+                # Game has been won already
+                print_winner(current_winner,  server_player1,  server_player2,  game_id)
+                break
+            elif current_winner == 0 and strategy.is_full(board):
+                # Nobody won and nobody will
+                print_winner(current_winner,  server_player1,  server_player2,  game_id)
+                break
+        time.sleep(5)
+
+
 def show_game_moves():
     print("Getting the move list...\n")
     game_id = input("Game ID: ")
     count = input("Count (number of moves in the past to get): ")
     my_moves = phc.get_moves(game_id,  count)
     print(my_moves)
+
 
 def show_game_map():
     print("Getting the game map...\n")
@@ -173,7 +376,7 @@ if __name__=='__main__':
         elif selection == PLAY_SINGLE_MOVE:
             play_single_move()
         elif selection == PLAY_WHOLE_EXISTING_GAME:
-            print("Not yet implemented")
+            play_existing_game()
         elif selection == SHOW_GAME_MOVES:
             show_game_moves()
         elif selection == SHOW_GAME_MAP:
