@@ -1,15 +1,13 @@
-import random
 import time
 import numpy as np
-from multiprocessing import Manager, Queue, Pool, cpu_count
 import requests
 import json
 
 '''
 Other Dependencies
 '''
-from TTTMoveMaker import move_worker, make_move
-from TTTStrategy import TTTStrategy
+import TTTMoveMaker as mm
+import TTTStrategy as strategy
 
 class TTTAgent:
     #Constructor
@@ -19,17 +17,16 @@ class TTTAgent:
         self.url=url
         self.headers=self.get_header(headers)
         self.interval=interval
-        self.teamid1=teamid1 
-        self.teamid2=teamid2 
+        self.teamid1=teamid1
+        self.teamid2=teamid2
         self.first=first==1
         self.board=np.array([[0]*board_size for i in range(board_size)])
         self.opt=opt
         self.evaluator=evaluator
         self.status=False
         self.gameid=gameid
-        self.ttt=TTTStrategy()
         self.timeout=timeout
-        
+
         if opt==1:
             flag, gameid = self.start_game()
             if flag==True:
@@ -50,11 +47,11 @@ class TTTAgent:
                 self.status=True
             else:
                 print("Failed to join game. Check Intput.")
-            
+
     #Get HTTP Header from File
     def get_header(self, file):
         return json.load(open(file,'r'))
-    
+
     #Start Game
     def start_game(self):
         payload={'teamId1': f'{self.teamid1}','teamId2': f'{self.teamid2}','type': 'game','gameType': 'TTT','boardSize':f'{self.board_size}', 'target': f'{self.target}'} if self.first else {'teamId1': f'{self.teamid2}','teamId2': f'{self.teamid1}','type': 'game','gameType': 'TTT','boardSize':f'{self.board_size}', 'target': f'{self.target}'}
@@ -64,7 +61,7 @@ class TTTAgent:
             return True, int(response['gameId'])
         else:
             return False, None
-    
+
     #Get Board
     def get_board(self):
         response=requests.get(self.url+f"?type=boardString&gameId={self.gameid}", headers=self.headers)
@@ -73,9 +70,9 @@ class TTTAgent:
         if response['code']=='OK':
             return True, self.string_to_board(response['output'])
         else:
-            return False, None        
-    
-    #String to NP Array 
+            return False, None
+
+    #String to NP Array
     def string_to_board(self, boardstr):
         ele_dict={"X":-1, "O":1, "_":0, "-":0}
         rows=boardstr.split("\n")
@@ -85,14 +82,14 @@ class TTTAgent:
         else:
             board=np.array([[ele_dict[ele] for ele in [*row]] for idx, row in enumerate(rows)])
         return board
-    
+
     #Print Board
     def print_board(self):
         for row in self.board:
             print(" ".join(["X" if x == -1 else "O" if x == 1 else "_" for x in row]))
         print()
-    
-    #Get Moves 
+
+    #Get Moves
     def get_moves(self):
         #print(self.url+f'?type=moves&gameId={self.gameid}&count=1')
         response=requests.get(self.url+f'?type=moves&gameId={self.gameid}&count=2', headers=self.headers)
@@ -110,8 +107,8 @@ class TTTAgent:
                     return True, teamid, move, [move]
         else:
             return False, None, None, []
-    
-    #Post Move 
+
+    #Post Move
     def post_move(self, row, col):
         #print(f"Move posted @ row {row} col {col}")
         payload={'teamId': f'{self.teamid1}','move': f'{row},{col}','type': 'move','gameId': f'{self.gameid}'}
@@ -132,8 +129,8 @@ class TTTAgent:
         print("Last moves:", last_moves)
         row, col = 0, 0
         while True:
-            winner = self.ttt.check_winner(self.board, self.target, row, col)
-            if winner != 0 or self.ttt.is_full(self.board):
+            winner = strategy.check_winner(self.board, self.target, row, col)
+            if winner != 0 or strategy.is_full(self.board):
                 break
             #If we are first mover
             if self.first==True:
@@ -148,22 +145,22 @@ class TTTAgent:
                         if success==True and teamid==self.teamid2:
                             print("X Player Made Move.")
                             my_move=True
-                            #Get New Board 
+                            #Get New Board
                             _, self.board=self.get_board()
                             self.print_board()
                         else:
                             time.sleep(self.interval)
-                #Start my round 
+                #Start my round
                 print("Start my round (O)")
                 #Make A Move
-                row, col = make_move(self.board, True, self.target, last_moves, self.evaluator, self.timeout, self.ttt)
+                row, col = mm.make_move(self.board, True, self.target, last_moves, self.evaluator, self.timeout)
                 self.board[row][col] = 1
                 last_moves=[last_moves[-1], (row, col)] if len(last_moves)>0 else [(row, col)]
                 first_move=False
                 #Post Move
                 self.post_move(row, col)
                 _, self.board=self.get_board()
-                #Set My Round to False 
+                #Set My Round to False
                 my_move=False
             #If we are second mover
             else:
@@ -191,21 +188,21 @@ class TTTAgent:
                             self.print_board()
                         else:
                             time.sleep(self.interval)
-                #Start My Round 
+                #Start My Round
                 print("Start my round (X)")
-                row, col = make_move(self.board, False, self.target, last_moves, self.evaluator, self.timeout, self.ttt)
+                row, col = mm.make_move(self.board, False, self.target, last_moves, self.evaluator, self.timeout)
                 self.board[row][col] = -1
                 #Store Last moves
                 last_moves=[last_moves[-1], (row, col)] if len(last_moves)>0 else [(row, col)]
-                #Post Move 
+                #Post Move
                 self.post_move(row, col)
                 _, self.board=self.get_board()
-                #Set My Round to False 
+                #Set My Round to False
                 my_move=False
-            #Print Board 
+            #Print Board
             self.print_board()
-                
-                
+
+
         #print(winner)
         if winner == 1:
             print("Player 1 (Maximizing player) wins!")
@@ -216,7 +213,7 @@ class TTTAgent:
 
 
 if __name__=='__main__':
-    #Start 
+    #Start
     print("TTT Agent Program Starts.")
     '''
     #Old codes to request input from teriminal
@@ -257,7 +254,7 @@ if __name__=='__main__':
         except:
             print("Invalid input.")
     '''
-    
+
     while True:
         try:
             gamefile = input("Name of the game setup JSON file: >")
@@ -269,13 +266,13 @@ if __name__=='__main__':
             first=game_dict['Game Parameters']['First Mover']
             teamid1=game_dict['Teams']['Team 1']
             teamid2=game_dict['Teams']['Team 2']
-            evaluator=game_dict['Evaluator']    
+            evaluator=game_dict['Evaluator']
             break
         except:
             print("Something wrong with the game setup file. Try Again")
             continue
-    
-    #Agent Starts 
+
+    #Agent Starts
     tttagent=TTTAgent(board_size, target, opt, teamid1, teamid2, first, gameid=gameid, evaluator=evaluator)
     if tttagent.status==True:
         tttagent.play_game()
