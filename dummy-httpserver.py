@@ -121,10 +121,8 @@ def handle_create_game(query):
             new_game = Game(team1, team2, board_size, target, game_id)
             all_games[game_id_counter] = new_game
 
-            # Make the initial move if it is the server's turn
-            if server_id == int(new_game.player1):
-                row, col = select_unused_coords(new_game.ttt.board)
-                new_game.make_move(server_id, row, col)
+            print(f"Player 1 (Team {team1}) has symbol '{new_game.team_symbol(team1)}'")
+            print(f"Player 2 (Team {team2}) has symbol '{new_game.team_symbol(team2)}'")
 
             resp = {}
             resp['code'] = "OK"
@@ -226,15 +224,6 @@ def handle_move(query):
     resp['code'] = "OK"
     resp['moveId'] = move_id_counter
     move_id_counter += 1
-
-    if not current_game.is_game_over():
-        # TODO - Place this elsewhere so a delay can be introduced
-        if team_id == int(current_game.player1):
-            server_id = int(current_game.player2)
-        else:
-            server_id = int(current_game.player1)
-        row, col = select_unused_coords(current_game.ttt.board)
-        current_game.make_move(server_id, row, col)
 
     return resp
 

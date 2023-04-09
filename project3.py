@@ -14,6 +14,7 @@
 
 from project_httpclient import ProjectHttpClient
 import TTTStrategy as strategy
+import TTTMoveMaker as mm
 
 import argparse
 import numpy as np
@@ -85,7 +86,7 @@ def update_internal_gamelist():
 def list_games():
     print(f"Listing games for {my_id}...\n")
     update_internal_gamelist()
-    print(f"Games for {my_id}: {my_games}")
+    print(f"Games for User {my_id} of teams {phc.teams}: {my_games}")
 
 
 def list_teams():
@@ -134,7 +135,7 @@ def play_single_move():
 
     # Is it allowable to play? Am I a part of the team playing?
     if not current_team_id in phc.teams:
-        print(f"Error: {my_id} is not a member of the current turn's team ({current_team_id})")
+        print(f"Error: Player {my_id} is not a member of the current turn's team ({current_team_id})")
         # Go back to the main menu
         return
 
@@ -148,37 +149,41 @@ def play_single_move():
 # Is it the turn of a team I am part of?
 def is_my_turn(game_id,  server_player1,  server_player2):
     my_turn = False
-    my_moves = phc.get_moves(game_id,  1)
+    my_moves = phc.get_moves(game_id,  2)
     current_team_id = -1
+    current_team_value = 0
     last_move = []
 
     if not my_moves:
         print(f"It is Player 1 ({server_player1})'s turn)")
         current_team_id = server_player1
+        current_team_value = 1
     else:
         last_move = my_moves[0]
         last_team_id = int(last_move['teamId'])
         if (last_team_id == server_player1):
             print(f"It is Player 2 ({server_player2})'s turn")
             current_team_id = server_player2
+            current_team_value = -1
         else:
             print(f"It is Player 1 ({server_player1})'s turn")
             current_team_id = server_player1
+            current_team_value = 1
 
     # Am I allowed to play?
     if current_team_id in phc.teams:
-        print(f"I can make a move because {current_team_id} includes me")
+        print(f"I can make a move because Team {current_team_id} includes me (User {my_id})")
         my_turn = True
     else:
-        print(f"I need to wait until {current_team_id} makes a move")
+        print(f"I (User {my_id}) need to wait until {current_team_id} makes a move")
         my_turn = False
 
-    return my_turn,  current_team_id,  last_move
+    return my_turn,  current_team_id, current_team_value,  my_moves
 
 
 #String to NP Array
 def string_to_board(boardstr):
-    ele_dict={"X":-1, "O":1, "_":0, "-":0}
+    ele_dict={"X":1, "O":-1, "_":0, "-":0}
     rows=boardstr.split("\n")
     rows.remove("")
     if " " in rows[0]:
@@ -209,7 +214,7 @@ def select_unused_coords(board):
         col = random.randrange(board_size)
         if board[row][col] == 0:
             break
-    print(f"Selected row={row}, col={col} for board =")
+    #print(f"Selected row={row}, col={col} for board =")
     print_board(board)
 
     return row, col
@@ -271,46 +276,31 @@ def play_existing_game():
         last_y = int(last_move['moveY'])
         last_row = last_y
         last_col = last_x
-        print(f"Checking last move of row={last_row},col={last_col}")
         boardstr = phc.get_game_board(game_id)
         board = string_to_board(boardstr)
+        print(f"Checking last move of row={last_row},col={last_col},board={board}, last_move={last_move}")
         current_winner = strategy.check_winner(board, target, last_row,  last_col)
         if current_winner != 0:
             print_winner(current_winner, server_player1,  server_player2,  game_id)
             return
 
     while True:
-        my_turn,  current_team_id,  prev_move = is_my_turn(game_id,  server_player1,  server_player2)
+        my_turn,  current_team_id, current_team_value,  prev_moves = is_my_turn(game_id,  server_player1,  server_player2)
         if not my_turn:
             delay = 10
             print(f"Waiting for {delay} seconds")
             time.sleep(delay)
-        else:
-            boardstr = phc.get_game_board(game_id)
-            board = string_to_board(boardstr)
-            # TODO - Get the actual target
-            target = board.shape[0]
+            # Query the server once again by restarting the loop
+            continue
 
-            # If there are existing moves, make sure the game is still going
-            if prev_move:
-                row = int(prev_move['moveY'])
-                col = int(prev_move['moveX'])
-                current_winner = strategy.check_winner(board, target, row,  col)
-                if current_winner != 0:
-                    # Game has been won already
-                    print_winner(current_winner,  server_player1,  server_player2,  game_id)
-                    break
-                elif current_winner == 0 and strategy.is_full(board):
-                    # Nobody won and nobody will
-                    print_winner(current_winner,  server_player1,  server_player2,  game_id)
-                    break
+        boardstr = phc.get_game_board(game_id)
+        board = string_to_board(boardstr)
 
-            # Since the game hasn't finished, make a move
-            # TODO - Use the TTTStrategy, TTTMover...
-            row, col = select_unused_coords(board)
-            phc.make_move(game_id,  current_team_id, row,  col)
-
-            # Did this last move win the game?
+        # If there are existing moves, make sure the game is still going
+        if prev_moves:
+            prev_move = prev_moves[0]
+            row = int(prev_move['moveY'])
+            col = int(prev_move['moveX'])
             current_winner = strategy.check_winner(board, target, row,  col)
             if current_winner != 0:
                 # Game has been won already
@@ -320,7 +310,18 @@ def play_existing_game():
                 # Nobody won and nobody will
                 print_winner(current_winner,  server_player1,  server_player2,  game_id)
                 break
-        time.sleep(5)
+
+        # Since the game hasn't finished, make a move
+        # TODO - Use the TTTStrategy, TTTMover...
+        #timeout = 30
+        #evaluator = 4
+        #is_maximizing = (current_team_id == server_player1)
+        #row, col = mm.make_move(board, is_maximizing, target, prev_moves, evaluator, timeout)
+        row, col = select_unused_coords(board)
+        print(f"About to try row={row}, col={col}")
+        phc.make_move(game_id,  current_team_id, row,  col)
+
+        time.sleep(7)
 
 
 def show_game_moves():

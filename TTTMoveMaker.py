@@ -2,8 +2,8 @@
 Dependencies
 '''
 import random
-from multiprocessing import Manager, Queue, Pool, cpu_count
-from TTTStrategy import TTTStrategy
+from multiprocessing import Manager, Pool, cpu_count
+import TTTStrategy as strategy
 import time
 
 '''
@@ -14,7 +14,6 @@ Functions
 Mover Worker for Multiprocessing
 '''
 def move_worker(input_queue, result_queue):
-    ttt=TTTStrategy()
     while True:
         try:
             func_type, data = input_queue.get()
@@ -22,13 +21,13 @@ def move_worker(input_queue, result_queue):
                 i, j, board, is_maximizing, target, max_depth, alpha, beta, last_moves, evaluator = data
                 #print(f"Get Data for Move @ ({i,j} @ Depth {max_depth})")
                 board[i][j] = 1 if is_maximizing else -1
-                score = ttt.minmax(board, 0, i, j, not is_maximizing, target, alpha, beta, max_depth, last_moves, evaluator)
+                score = strategy.minmax(board, 0, i, j, not is_maximizing, target, alpha, beta, max_depth, last_moves, evaluator)
                 board[i][j] = 0
                 #print(f"Scoring: {(i, j, max_depth, score)}")
                 result_queue.put((func_type, (i, j, max_depth, score)))
             elif func_type==2:
-                board, target, is_maximizing, i, j = data
-                player_winning_move, opponent_winning_move = ttt.pattern_check(board, target, is_maximizing, i, j,  start_time)
+                board, target, is_maximizing, i, j, start_time = data
+                player_winning_move, opponent_winning_move = strategy.pattern_check(board, target, is_maximizing, i, j,  start_time)
                 result_queue.put((func_type, (player_winning_move, opponent_winning_move)))
         except Exception as e:
             print(f"Exception: {e}")
@@ -39,7 +38,7 @@ def move_worker(input_queue, result_queue):
 '''
 Function to Determine a Move
 '''
-def make_move(board, is_maximizing, target, last_moves, evaluator, timeout, ttt):
+def make_move(board, is_maximizing, target, last_moves, evaluator, timeout):
     cpu=cpu_count()-1
     start_time = time.time()
     best_move={}
@@ -61,7 +60,7 @@ def make_move(board, is_maximizing, target, last_moves, evaluator, timeout, ttt)
 
     #print(possible_moves)
     #Get Possible Moves
-    possible_moves=ttt.get_possible_moves(board)
+    possible_moves=strategy.get_possible_moves(board)
 
     #First Move
     if len(possible_moves)==len(board)**2:
@@ -76,7 +75,7 @@ def make_move(board, is_maximizing, target, last_moves, evaluator, timeout, ttt)
         return (i,j)
 
     #Rank Possible Moves
-    ranked_moves=ttt.rank_moves(possible_moves, last_moves)
+    ranked_moves=strategy.rank_moves(possible_moves, last_moves)
 
 
     '''
