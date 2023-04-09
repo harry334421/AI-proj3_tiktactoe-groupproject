@@ -16,12 +16,6 @@ import json
 import requests
 import urllib.parse
 
-
-# Using the default requests user agent caused errors with the class server:
-# 'Not Acceptable! An appropriate representation of the requested resource could
-# not be found on this server.'
-fake_ua = 'PostmanRuntime/7.31.3'
-
 dummy_http_server = 'http://127.0.0.1:8080'
 real_http_server = 'https://www.notexponential.com/aip2pgaming/api/index.php'
 
@@ -30,11 +24,10 @@ class ProjectHttpClient:
     # my_id: Team ID of client (us)
     # api_key: Required API key (necessary for using class server)
     # play_dummy_server: True if playing the dummy server, False if playing the real server
-    def __init__(self, my_id,  api_key,  play_dummy_server):
+    def __init__(self, header_file,  play_dummy_server):
         self.my_games = {}
-        self.my_id = my_id
-        self.api_key = api_key
-        self.ua = fake_ua
+        self.header = json.load(open(header_file,'r'))
+        self.my_user_id = self.header['userId']
         if play_dummy_server:
             self.server_url = dummy_http_server
         else:
@@ -51,14 +44,8 @@ class ProjectHttpClient:
         url = f"{self.server_url}?{query}"
 
         payload={}
-        headers = {
-            'x-api-key': self.api_key,
-            'userid': self.my_id,
-            'User-Agent': self.ua
-        }
-
         my_teams = []
-        raw_response = requests.get(url, headers=headers, data=payload)
+        raw_response = requests.get(url, headers=self.header, data=payload)
         try:
             response = json.loads(raw_response.text)
         except:
@@ -83,14 +70,7 @@ class ProjectHttpClient:
         payload['teamId1'] = team1_id
         payload['teamId2'] = team2_id
 
-        headers = {
-            'x-api-key': self.api_key,
-            'userid': self.my_id,
-            'User-Agent': self.ua
-        }
-        files = []
-
-        raw_response = requests.post(self.server_url, headers=headers, data=payload,  files=files)
+        raw_response = requests.post(self.server_url, headers=self.header, data=payload,  files=[])
         try:
             response = json.loads(raw_response.text)
         except:
@@ -113,14 +93,8 @@ class ProjectHttpClient:
         url = f"{self.server_url}?{query}"
 
         payload={}
-        headers = {
-            'x-api-key': self.api_key,
-            'userid': self.my_id,
-            'User-Agent': self.ua
-        }
-
         my_games = []
-        raw_response = requests.get(url, headers=headers, data=payload)
+        raw_response = requests.get(url, headers=self.header, data=payload)
         try:
             response = json.loads(raw_response.text)
         except:
@@ -147,14 +121,8 @@ class ProjectHttpClient:
         url = f"{self.server_url}?{query}"
 
         payload={}
-        headers = {
-            'x-api-key': self.api_key,
-            'userid': self.my_id,
-            'User-Agent': self.ua
-        }
-
         board_map = []
-        raw_response = requests.get(url, headers=headers, data=payload)
+        raw_response = requests.get(url, headers=self.header, data=payload)
         try:
             response = json.loads(raw_response.text)
         except:
@@ -180,14 +148,9 @@ class ProjectHttpClient:
         url = f"{self.server_url}?{query}"
 
         payload={}
-        headers = {
-            'x-api-key': self.api_key,
-            'userid': self.my_id,
-            'User-Agent': self.ua
-        }
 
         board = ""
-        raw_response = requests.get(url, headers=headers, data=payload)
+        raw_response = requests.get(url, headers=self.header, data=payload)
         try:
             response = json.loads(raw_response.text)
         except:
@@ -211,14 +174,7 @@ class ProjectHttpClient:
         payload['move'] = f"{col},{row}" # Column is x coordinate and row is y coordinate
         payload['teamId'] = team_id
 
-        headers = {
-            'x-api-key': self.api_key,
-            'userid': self.my_id,
-            'User-Agent': self.ua
-        }
-        files = []
-
-        raw_response = requests.post(self.server_url, headers=headers, data=payload, files=files)
+        raw_response = requests.post(self.server_url, headers=self.header, data=payload, files=[])
         try:
             response = json.loads(raw_response.text)
         except:
@@ -242,14 +198,8 @@ class ProjectHttpClient:
         url = f"{self.server_url}?{query}"
 
         payload={}
-        headers = {
-            'x-api-key': self.api_key,
-            'userid': self.my_id,
-            'User-Agent': self.ua
-        }
-
         moves = [] # Empty for error checking
-        raw_response = requests.get(url, headers=headers, data=payload)
+        raw_response = requests.get(url, headers=self.header, data=payload)
         try:
             response = json.loads(raw_response.text)
         except:

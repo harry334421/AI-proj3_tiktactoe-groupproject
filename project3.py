@@ -14,10 +14,11 @@
 
 from project_httpclient import ProjectHttpClient
 import TTTStrategy as strategy
-import TTTMoveMaker as mm
+#import TTTMoveMaker as mm
 
 import argparse
 import numpy as np
+import os.path
 import random
 import time
 
@@ -43,21 +44,10 @@ main_menu[SHOW_GAME_MAP]="Show map for existing game"
 main_menu[SHOW_GAME_BOARD]="Show board for existing game"
 main_menu[EXIT_PROJECT3]="Exit"
 
+KEY_FILE = 'key.json'
+
 my_games = []
 my_game_ids = []
-
-
-def read_token_file():
-    my_id = 0
-    my_key = ""
-    with open('token.txt') as f:
-        for line in f:
-            if not line.startswith("#"):
-                values = line.split(',')
-                my_id = values[0]
-                my_key = values[1].strip()
-                break
-    return my_id,  my_key
 
 
 def print_main_menu():
@@ -84,13 +74,13 @@ def update_internal_gamelist():
 
 
 def list_games():
-    print(f"Listing games for {my_id}...\n")
+    print(f"Listing games for {phc.my_user_id}...\n")
     update_internal_gamelist()
-    print(f"Games for User {my_id} of teams {phc.teams}: {my_games}")
+    print(f"Games for User {phc.my_user_id} of teams {phc.teams}: {my_games}")
 
 
 def list_teams():
-    print(f"Teams for {my_id}: {phc.teams}")
+    print(f"Teams for {phc.my_user_id}: {phc.teams}")
 
 
 def create_new_game():
@@ -135,7 +125,7 @@ def play_single_move():
 
     # Is it allowable to play? Am I a part of the team playing?
     if not current_team_id in phc.teams:
-        print(f"Error: Player {my_id} is not a member of the current turn's team ({current_team_id})")
+        print(f"Error: Player {phc.my_user_id} is not a member of the current turn's team ({current_team_id})")
         # Go back to the main menu
         return
 
@@ -172,10 +162,10 @@ def is_my_turn(game_id,  server_player1,  server_player2):
 
     # Am I allowed to play?
     if current_team_id in phc.teams:
-        print(f"I can make a move because Team {current_team_id} includes me (User {my_id})")
+        print(f"I can make a move because Team {current_team_id} includes me (User {phc.my_user_id})")
         my_turn = True
     else:
-        print(f"I (User {my_id}) need to wait until {current_team_id} makes a move")
+        print(f"I (User {phc.my_user_id}) need to wait until {current_team_id} makes a move")
         my_turn = False
 
     return my_turn,  current_team_id, current_team_value,  my_moves
@@ -360,9 +350,12 @@ if __name__=='__main__':
                                         help="Play against the dummy server instead of the real one" )
     args = parser.parse_args()
 
-    # ID and token are used for server authentication
-    my_id,  my_key = read_token_file()
-    phc = ProjectHttpClient(my_id,  my_key,  args.dummy)
+    if not os.path.exists(KEY_FILE):
+        print(f"Error: No key/header file {KEY_FILE} (Did you copy and fill in the template?)")
+        exit(0)
+
+    # 'key.json' contains the necessary authentication headers
+    phc = ProjectHttpClient(KEY_FILE,  args.dummy)
 
     while True:
         print_main_menu()

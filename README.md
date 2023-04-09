@@ -18,15 +18,7 @@ The game logic is in a separate file (mostly for now). You can adjust the board 
 
 ## Running
 
-First, copy your user id and API key into `token_TEMPLATE.txt` and save as `token.txt`.
-
-### Using the Class Server
-
-No arguments are needed for the single program used:
-
-```
-    python3 project3.py
-```
+First, copy your user id and API key into `key-TEMPLATE.json` and save as `key.json`.
 
 ### Using the Dummy Server
 
@@ -45,6 +37,14 @@ Now, in the other window, start the client. Please note that you should add the 
 
 ```
     python3 project3.py -d
+```
+
+### Using the Class Server
+
+No arguments are needed for the single program used:
+
+```
+    python3 project3.py
 ```
 
 ## TODOs
