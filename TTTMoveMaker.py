@@ -147,11 +147,11 @@ def make_move(board, is_maximizing, target, last_moves, evaluator, timeout, ttt,
     #Start the IDS Process
     #MinMax with Iterative Deepenining
     max_depth=min_depth
-    depth_res_count={0:0}
+    depth_res_count={max_depth:0}
     best_move[max_depth]=[]
     alpha[max_depth]=-float('inf')
     beta[max_depth]=float('inf')
-    score_map={0:[[None]*len(board) for _ in range(len(board))]}
+    score_map={max_depth:[[None]*len(board) for _ in range(len(board))]}
     counter=0
     beta_cutoff=None
     idx=0
