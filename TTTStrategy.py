@@ -1,11 +1,11 @@
 '''
 Strategy Class That Defines all Strategy Functions
 '''
+import math 
+import numpy as np
 
 class TTTStrategy:
     def __init__(self):
-        import math 
-        import numpy as np
         self.np=np
         self.math=math 
         

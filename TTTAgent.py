@@ -29,6 +29,7 @@ class TTTAgent:
         self.gameid=gameid
         self.ttt=TTTStrategy()
         self.timeout=timeout
+        self.min_depth=1
         
         if opt==1:
             flag, gameid = self.start_game()
@@ -153,10 +154,15 @@ class TTTAgent:
                             self.print_board()
                         else:
                             time.sleep(self.interval)
+                #Check Winner 
+                winner = self.ttt.check_winner(self.board, self.target, row, col)
+                if winner != 0 or self.ttt.is_full(self.board):
+                    break
                 #Start my round 
                 print("Start my round (O)")
                 #Make A Move
-                row, col = make_move(self.board, True, self.target, last_moves, self.evaluator, self.timeout, self.ttt)
+                (row, col), res_depth = make_move(self.board, True, self.target, last_moves, self.evaluator, self.timeout, self.ttt, self.min_depth)
+                self.min_depth=res_depth if res_depth!=None else self.min_depth
                 self.board[row][col] = 1
                 last_moves=[last_moves[-1], (row, col)] if len(last_moves)>0 else [(row, col)]
                 first_move=False
@@ -191,9 +197,14 @@ class TTTAgent:
                             self.print_board()
                         else:
                             time.sleep(self.interval)
+                #Check Winner 
+                winner = self.ttt.check_winner(self.board, self.target, row, col)
+                if winner != 0 or self.ttt.is_full(self.board):
+                    break
                 #Start My Round 
                 print("Start my round (X)")
-                row, col = make_move(self.board, False, self.target, last_moves, self.evaluator, self.timeout, self.ttt)
+                (row, col), res_depth = make_move(self.board, False, self.target, last_moves, self.evaluator, self.timeout, self.ttt, self.min_depth)
+                self.min_depth=res_depth if res_depth!=None else self.min_depth
                 self.board[row][col] = -1
                 #Store Last moves
                 last_moves=[last_moves[-1], (row, col)] if len(last_moves)>0 else [(row, col)]

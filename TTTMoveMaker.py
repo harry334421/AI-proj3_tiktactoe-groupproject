@@ -39,7 +39,7 @@ def move_worker(input_queue, result_queue):
 '''
 Function to Determine a Move 
 '''
-def make_move(board, is_maximizing, target, last_moves, evaluator, timeout, ttt):
+def make_move(board, is_maximizing, target, last_moves, evaluator, timeout, ttt, min_depth):
     cpu=cpu_count()-1
     start_time = time.time()
     best_score={}
@@ -74,7 +74,7 @@ def make_move(board, is_maximizing, target, last_moves, evaluator, timeout, ttt)
             j=len(board)//2
         pool.terminate()
         pool.join()
-        return (i,j)
+        return (i,j), None
     
     #Rank Possible Moves 
     ranked_moves=ttt.rank_moves(possible_moves, last_moves)
@@ -105,7 +105,7 @@ def make_move(board, is_maximizing, target, last_moves, evaluator, timeout, ttt)
                 if tmp_player_winning_move[0]!=(-1,-1):
                     pool.terminate()
                     pool.join()
-                    return tmp_player_winning_move[0]
+                    return tmp_player_winning_move[0], None
                 else:
                     player_winning_move[0]=tmp_player_winning_move[0]
                     opponent_winning_move[0]=tmp_opponent_winning_move[0]
@@ -127,7 +127,7 @@ def make_move(board, is_maximizing, target, last_moves, evaluator, timeout, ttt)
         print("Blocking Move.")
         pool.terminate()
         pool.join()
-        return opponent_winning_move[0]
+        return opponent_winning_move[0], None
     for idx in range(1,5):
         if player_winning_move[idx]!=[]:
             delta=time.time() - start_time
@@ -135,18 +135,18 @@ def make_move(board, is_maximizing, target, last_moves, evaluator, timeout, ttt)
             print(f"Intermediate Winning Move @ Scenario{idx}.")
             pool.terminate()
             pool.join()
-            return random.choice(player_winning_move[idx])
+            return random.choice(player_winning_move[idx]), None
         elif opponent_winning_move[idx]!=[]:
             delta=time.time() - start_time
             print(f"Move time: {'{:.2f}s'.format(delta)}")
             print(f"Intermediate Blocking Move @ Scenario {idx}.")
             pool.terminate()
             pool.join()
-            return random.choice(opponent_winning_move[idx])
+            return random.choice(opponent_winning_move[idx]), None
     
     #Start the IDS Process
     #MinMax with Iterative Deepenining
-    max_depth=0
+    max_depth=min_depth
     depth_res_count={0:0}
     best_move[max_depth]=[]
     alpha[max_depth]=-float('inf')
@@ -221,7 +221,7 @@ def make_move(board, is_maximizing, target, last_moves, evaluator, timeout, ttt)
         print(f"Move time: {'{:.2f}s'.format(delta)}")
         pool.terminate()
         pool.join()
-        return random.choice(best_move[beta_cutoff])
+        return random.choice(best_move[beta_cutoff]), None
     #Check Results
     res_depth=0
     #print("Result Depth Count:", depth_res_count)
@@ -252,4 +252,4 @@ def make_move(board, is_maximizing, target, last_moves, evaluator, timeout, ttt)
     except:
         pass
     #Return Best Move if None above
-    return random.choice(best_move[res_depth])
+    return random.choice(best_move[res_depth]), res_depth
