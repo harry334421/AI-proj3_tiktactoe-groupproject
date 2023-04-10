@@ -53,7 +53,7 @@ def make_move(board, is_maximizing, target, last_moves, evaluator, timeout, ttt,
     '''
     #Queue Setup
     m=Manager()
-    iqueue=m.Queue(maxsize=2)
+    iqueue=m.Queue(maxsize=1)
     rqueue=m.Queue()
     #Dispatch Workers
     pool=Pool(cpu)
@@ -176,10 +176,10 @@ def make_move(board, is_maximizing, target, last_moves, evaluator, timeout, ttt,
                     alpha[max_depth]=-float('inf')
                     beta[max_depth]=float('inf')
                     score_map[max_depth]=[[None]*len(board) for _ in range(len(board))]
-                    if max_depth==len(ranked_moves):
+                    if max_depth>=len(ranked_moves):
                         #print("Max Depth Reached")
                         skip=True
-                        max_depth-=1
+                        max_depth=max(max_depth-1,min_depth)
                 idx= idx+1 if idx!=len(ranked_moves)-1 else 0
                 #print(f"Index {idx}")
         except:
@@ -252,4 +252,4 @@ def make_move(board, is_maximizing, target, last_moves, evaluator, timeout, ttt,
     except:
         pass
     #Return Best Move if None above
-    return random.choice(best_move[res_depth]), res_depth
+    return random.choice(best_move[res_depth]), min(max(res_depth-1,min_depth), max(len(ranked_moves)-2,0))

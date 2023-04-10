@@ -421,7 +421,6 @@ class TTTStrategy:
         #Base for Exponential 
         base = target**2+1
         
-        
         #Board Size 
         rows, cols=board.shape
         
@@ -465,9 +464,6 @@ class TTTStrategy:
         return score
 
     def evaluate2(self, board, target):
-        #Base for Exponential 
-        base = target**2+1
-        
         #Board Size 
         rows, cols=board.shape
         

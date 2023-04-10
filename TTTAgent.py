@@ -29,7 +29,7 @@ class TTTAgent:
         self.gameid=gameid
         self.ttt=TTTStrategy()
         self.timeout=timeout
-        self.min_depth=1
+        
         
         if opt==1:
             flag, gameid = self.start_game()
@@ -51,7 +51,9 @@ class TTTAgent:
                 self.status=True
             else:
                 print("Failed to join game. Check Intput.")
-            
+        
+        self.min_depth=max(min(1, len(self.ttt.get_possible_moves(board))-1),0)
+        
     #Get HTTP Header from File
     def get_header(self, file):
         return json.load(open(file,'r'))
