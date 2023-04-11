@@ -48,6 +48,8 @@ class TTTAgent:
             else:
                 print("Failed to join game. Check Intput.")
 
+        self.min_depth=max(min(1, len(self.ttt.get_possible_moves(board))-1),0)
+        
     #Get HTTP Header from File
     def get_header(self, file):
         return json.load(open(file,'r'))
@@ -150,10 +152,15 @@ class TTTAgent:
                             self.print_board()
                         else:
                             time.sleep(self.interval)
-                #Start my round
+                #Check Winner 
+                winner = self.ttt.check_winner(self.board, self.target, row, col)
+                if winner != 0 or self.ttt.is_full(self.board):
+                    break
+                #Start my round 
                 print("Start my round (O)")
                 #Make A Move
-                row, col = mm.make_move(self.board, True, self.target, last_moves, self.evaluator, self.timeout)
+                (row, col), res_depth = mm.make_move(self.board, True, self.target, last_moves, self.evaluator, self.timeout, self.ttt, self.min_depth)
+                self.min_depth=res_depth if res_depth!=None else self.min_depth
                 self.board[row][col] = 1
                 last_moves=[last_moves[-1], (row, col)] if len(last_moves)>0 else [(row, col)]
                 first_move=False
@@ -188,9 +195,15 @@ class TTTAgent:
                             self.print_board()
                         else:
                             time.sleep(self.interval)
-                #Start My Round
+                #Check Winner 
+                winner = self.ttt.check_winner(self.board, self.target, row, col)
+                if winner != 0 or self.ttt.is_full(self.board):
+                    break
+                #Start My Round 
                 print("Start my round (X)")
-                row, col = mm.make_move(self.board, False, self.target, last_moves, self.evaluator, self.timeout)
+                (row, col), res_depth = mm.make_move(self.board, False, self.target, last_moves, self.evaluator, self.timeout, self.ttt, self.min_depth)
+                self.min_depth=res_depth if res_depth!=None else self.min_depth
+
                 self.board[row][col] = -1
                 #Store Last moves
                 last_moves=[last_moves[-1], (row, col)] if len(last_moves)>0 else [(row, col)]
