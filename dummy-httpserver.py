@@ -245,6 +245,7 @@ def handle_request_board_string(query):
         current_game = all_games[game_id]
         resp['code'] = "OK"
         resp['output'] = current_game.get_board()
+        resp['target'] = current_game.target_size
 
     return resp
 
@@ -265,6 +266,7 @@ def handle_request_board_map(query):
         current_game = all_games[game_id]
         resp['code'] = "OK"
         resp['output'] = current_game.get_map()
+        resp['target'] = current_game.target_size
 
     return resp
 

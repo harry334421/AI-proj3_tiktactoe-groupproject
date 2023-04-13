@@ -39,7 +39,7 @@ def move_worker(input_queue, result_queue):
 Function to Determine a Move
 '''
 def make_move(board, is_maximizing, target, last_moves, evaluator, timeout, min_depth):
-    cpu=cpu_count()-1
+    cpu=1 # TODO - For testing #cpu_count()-1
     start_time = time.time()
     best_move={}
     alpha={}
@@ -74,11 +74,10 @@ def make_move(board, is_maximizing, target, last_moves, evaluator, timeout, min_
         pool.join()
 
         return (i,j), None
-    
-    #Rank Possible Moves 
-    ranked_moves=ttt.rank_moves(possible_moves, last_moves)
-    
-    
+
+    #Rank Possible Moves
+    ranked_moves=strategy.rank_moves(possible_moves, last_moves)
+
     '''
     Back to Pattern Checking while the async processes is starting
     '''
@@ -142,7 +141,7 @@ def make_move(board, is_maximizing, target, last_moves, evaluator, timeout, min_
             pool.terminate()
             pool.join()
             return random.choice(opponent_winning_move[idx]), None
-    
+
     #Start the IDS Process
     #MinMax with Iterative Deepenining
     max_depth=min_depth
@@ -165,90 +164,102 @@ def make_move(board, is_maximizing, target, last_moves, evaluator, timeout, min_
         try:
             if skip==False:
                 new_last_moves=[last_moves[-1], ranked_moves[idx]]
-                #print(f"Input Data:{(ranked_moves[idx][0], ranked_moves[idx][1], board, is_maximizing, target, max_depth, alpha[max_depth], beta[max_depth], player, new_last_moves)}")
+                print(f"ranked_moves={ranked_moves},  idx={idx}, new_last_moves={new_last_moves}")
+#                #print(f"Input Data:{(ranked_moves[idx][0], ranked_moves[idx][1], board, is_maximizing, target, max_depth, alpha[max_depth], beta[max_depth], player, new_last_moves)}")
                 iqueue.put_nowait((1, (ranked_moves[idx][0], ranked_moves[idx][1], board, is_maximizing, target, max_depth, alpha[max_depth], beta[max_depth], new_last_moves, evaluator)))
-                #print(f"Input Data {possible_moves[idx]}")
-                if idx==len(ranked_moves)-1:
-                    max_depth=int(max_depth+1)
-                    depth_res_count[max_depth]=0
-                    best_move[max_depth]=[]
-                    alpha[max_depth]=-float('inf')
-                    beta[max_depth]=float('inf')
-                    score_map[max_depth]=[[None]*len(board) for _ in range(len(board))]
-                    if max_depth>=len(ranked_moves):
-                        #print("Max Depth Reached")
-                        skip=True
-                        max_depth=max(max_depth-1,min_depth)
+#                #print(f"Input Data {possible_moves[idx]}")
+#                if idx==len(ranked_moves)-1:
+#                    max_depth=int(max_depth+1)
+#                    depth_res_count[max_depth]=0
+#                    best_move[max_depth]=[]
+#                    alpha[max_depth]=-float('inf')
+#                    beta[max_depth]=float('inf')
+#                    score_map[max_depth]=[[None]*len(board) for _ in range(len(board))]
+#                    if max_depth>=len(ranked_moves):
+#                        #print("Max Depth Reached")
+#                        skip=True
+#                        max_depth=max(max_depth-1,min_depth)
                 idx= idx+1 if idx!=len(ranked_moves)-1 else 0
                 #print(f"Index {idx}")
         except:
             pass
-        try:
-            func_type, (i, j, depth, score)=rqueue.get_nowait()
-            score_map[depth][i][j]=score
-            depth_res_count[depth]+=1
-            if is_maximizing and score > alpha[depth]:
-                alpha[depth] = score
-                best_move[depth] = [(i, j)]
-            elif is_maximizing and score == alpha[depth]:
-                best_move[depth].append((i, j))
-            elif not is_maximizing and score < beta[depth]:
-                #print(f"Update Beta: Current {beta[depth]} New {score}")
-                #print(f"Move added: {(i, j)}")
-                beta[depth] = score
-                best_move[depth] = [(i, j)]
-            elif not is_maximizing and score == beta[depth]:
-                #print(f"Move {(i,j)} added to best_move[depth]")
-                best_move[depth].append((i, j))
-            if beta[depth]<=alpha[depth]:
-                pool.terminate()
-                pool.join()
-                beta_cutoff=depth
-                break
-        except:
-            if depth_res_count[max_depth]==len(ranked_moves) and max_depth==len(ranked_moves)-1:
-                pool.terminate()
-                pool.join()
-                break
+#        try:
+#            func_type, (i, j, depth, score)=rqueue.get_nowait()
+#            score_map[depth][i][j]=score
+#            depth_res_count[depth]+=1
+#            if is_maximizing and score > alpha[depth]:
+#                alpha[depth] = score
+#                best_move[depth] = [(i, j)]
+#            elif is_maximizing and score == alpha[depth]:
+#                best_move[depth].append((i, j))
+#            elif not is_maximizing and score < beta[depth]:
+#                #print(f"Update Beta: Current {beta[depth]} New {score}")
+#                #print(f"Move added: {(i, j)}")
+#                beta[depth] = score
+#                best_move[depth] = [(i, j)]
+#            elif not is_maximizing and score == beta[depth]:
+#                #print(f"Move {(i,j)} added to best_move[depth]")
+#                best_move[depth].append((i, j))
+#            if beta[depth]<=alpha[depth]:
+#                pool.terminate()
+#                pool.join()
+#                beta_cutoff=depth
+#                break
+#        except:
+#            if depth_res_count[max_depth]==len(ranked_moves) and max_depth==len(ranked_moves)-1:
+#                pool.terminate()
+#                pool.join()
+#                break
     #print(max_depth)
     #print(depth_res_count)
 
-    #Beta Cutoff
-    if beta_cutoff is not None:
-        print('Beta cutoff')
-        delta=time.time() - start_time
-        print(f"Move time: {'{:.2f}s'.format(delta)}")
-        pool.terminate()
-        pool.join()
-        return random.choice(best_move[beta_cutoff]), None
-    #Check Results
-    res_depth=0
-    #print("Result Depth Count:", depth_res_count)
-    #print("Possible moves: ",len(possible_moves))
-    for idx, key in enumerate(sorted(list(depth_res_count.keys()), reverse=True)):
-        if depth_res_count[key]==len(possible_moves):
-            res_depth=key
-            break
 
-    delta=time.time() - start_time
-    print(f"Move time: {'{:.2f}s'.format(delta)}")
-
-    print(f"Best move @ depth {res_depth}")
-    '''
-    print(f'Best Score: {alpha[res_depth] if is_maximizing else beta[res_depth]}')
-
-    print(f'Best Moves: \n{best_move[res_depth]}')
-    print(f'Score map:')
-    for i,row in enumerate(score_map[res_depth]):
-        for col,con in enumerate(row):
-            print(f"{con} ", end="")
-        print("")
-    '''
+#    #Beta Cutoff
+#    if beta_cutoff is not None:
+#        print('Beta cutoff')
+#        delta=time.time() - start_time
+#        print(f"Move time: {'{:.2f}s'.format(delta)}")
+#        pool.terminate()
+#        pool.join()
+#        return random.choice(best_move[beta_cutoff]), None
+#    #Check Results
+#    res_depth=0
+#    #print("Result Depth Count:", depth_res_count)
+#    #print("Possible moves: ",len(possible_moves))
+#    for idx, key in enumerate(sorted(list(depth_res_count.keys()), reverse=True)):
+#        if depth_res_count[key]==len(possible_moves):
+#            res_depth=key
+#            break
+#
+#    delta=time.time() - start_time
+#    print(f"Move time: {'{:.2f}s'.format(delta)}")
+#
+#    print(f"Best move @ depth {res_depth}")
+#    '''
+#    print(f'Best Score: {alpha[res_depth] if is_maximizing else beta[res_depth]}')
+#
+#    print(f'Best Moves: \n{best_move[res_depth]}')
+#    print(f'Score map:')
+#    for i,row in enumerate(score_map[res_depth]):
+#        for col,con in enumerate(row):
+#            print(f"{con} ", end="")
+#        print("")
+#    '''
     #try close all remaining pool if exists
     try:
         pool.terminate()
         pool.join()
     except:
         pass
-    #Return Best Move if None above
-    return random.choice(best_move[res_depth]), min(max(res_depth-1,min_depth), max(len(ranked_moves)-2,0))
+
+    # TODO - Temporary
+    row = 0
+    col = 0
+    while True:
+        row = random.randrange(len(board))
+        col = random.randrange(len(board))
+        if board[row][col] == 0:
+            break
+    return (row, col),  None
+#    #Return Best Move if None above
+#    return random.choice(best_move[res_depth]), min(max(res_depth-1,min_depth), max(len(ranked_moves)-2,0))

@@ -122,6 +122,7 @@ class ProjectHttpClient:
 
         payload={}
         board_map = []
+        target = -1
         raw_response = requests.get(url, headers=self.header, data=payload)
         try:
             response = json.loads(raw_response.text)
@@ -129,15 +130,17 @@ class ProjectHttpClient:
             print(f"Server game non-JSON response: {raw_response.text}")
             return board_map
 
+        print(response)
         if ( response['code'] == 'OK'):
             board_map = response['output']
+            target = int(response['target'])
         else:
             if 'message' in response:
                 print(f"Failure in getting map for {game_id}, message={response['message']}")
             else:
                 print(f"Failure with no message given for getting map for {game_id}")
 
-        return board_map
+        return board_map, target
 
     def get_game_board(self, game_id):
         params = {}
@@ -150,6 +153,7 @@ class ProjectHttpClient:
         payload={}
 
         board = ""
+        target = -1
         raw_response = requests.get(url, headers=self.header, data=payload)
         try:
             response = json.loads(raw_response.text)
@@ -157,14 +161,17 @@ class ProjectHttpClient:
             print(f"Server game non-JSON response: {raw_response.text}")
             return board
 
+        print(response)
         if ( response['code'] == 'OK'):
             board = response['output']
+            target = int(response['target'])
         else:
             if 'message' in response:
                 print(f"Failure in getting board for {game_id}, message={response['message']}")
             else:
                 print(f"Failure with no message given for getting board for {game_id}")
-        return board
+
+        return board, target
 
 
     def make_move(self, game_id, team_id, row, col):

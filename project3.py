@@ -22,6 +22,10 @@ import os.path
 import random
 import time
 
+# TODO - Temporary
+import sys
+import traceback
+
 
 LIST_GAMES = '1'
 LIST_TEAMS = '1a'
@@ -175,6 +179,7 @@ def is_my_turn(game_id,  server_player1,  server_player2):
 #String to NP Array
 def string_to_board(boardstr):
     ele_dict={"X":1, "O":-1, "_":0, "-":0}
+    print(f"boardstr={boardstr}")
     rows=boardstr.split("\n")
     rows.remove("")
     if " " in rows[0]:
@@ -251,7 +256,7 @@ def play_existing_game():
         print(f"Error: {game_id} is not in the list of existing games {my_game_ids}")
         return
 
-    target = int(input("Target size: "))
+    _, target = phc.get_game_board(game_id)
 
     # Figure out player identities
     server_players_raw = my_games[game_id].split(':')
@@ -267,7 +272,7 @@ def play_existing_game():
         last_y = int(last_move['moveY'])
         last_row = last_y
         last_col = last_x
-        boardstr = phc.get_game_board(game_id)
+        boardstr, _ = phc.get_game_board(game_id)
         board = string_to_board(boardstr)
         print(f"Checking last move of row={last_row},col={last_col},board={board}, last_move={last_move}")
         current_winner = strategy.check_winner(board, target, last_row,  last_col)
@@ -284,7 +289,7 @@ def play_existing_game():
             # Query the server once again by restarting the loop
             continue
 
-        boardstr = phc.get_game_board(game_id)
+        boardstr, _ = phc.get_game_board(game_id)
         board = string_to_board(boardstr)
 
         # If there are existing moves, make sure the game is still going
@@ -303,17 +308,27 @@ def play_existing_game():
 
         # Since the game hasn't finished, make a move
         # TODO - Use the TTTStrategy, TTTMover...
-#        timeout = 30
-#        is_maximizing = (current_team_id == server_player1)
-#        if is_maximizing:
-#            evaluator = 1 # Arbitrary
-#        else:
-#            evaluator = 2 # Also arbitrary
-#        last_moves = phc.get_moves(game_id,  2) # make_move requires last two moves
-#        row, col = mm.make_move(board, is_maximizing, target, last_moves, evaluator, timeout)
-        row, col = select_unused_coords(board)
-        print(f"About to try row={row}, col={col}")
-        phc.make_move(game_id,  current_team_id, row,  col)
+        timeout = 30
+        is_maximizing = (current_team_id == server_player1)
+        if is_maximizing:
+            evaluator = 1 # Arbitrary
+        else:
+            evaluator = 2 # Also arbitrary
+        last_moves = phc.get_moves(game_id,  2) # make_move requires last two moves
+        min_depth=max(min(1, len(strategy.get_possible_moves(board))-1),0)
+        try:
+            coords, _ = mm.make_move(board, is_maximizing, target, last_moves, evaluator, timeout,  min_depth)
+            row = coords[0]
+            col = coords[1]
+            #row, col = select_unused_coords(board)
+            print(f"About to try row={row}, col={col}")
+            phc.make_move(game_id,  current_team_id, row,  col)
+
+        except Exception:
+            print("Exception in user code:")
+            print("-"*60)
+            traceback.print_exc(file=sys.stdout)
+            print("-"*60)
 
         time.sleep(5)
 
@@ -329,9 +344,9 @@ def show_game_moves():
 def show_game_map():
     print("Getting the game map...\n")
     game_id = input("Game ID: ")
-    my_map = phc.get_game_map(game_id)
+    my_map, target = phc.get_game_map(game_id)
     if my_map:
-        print(my_map)
+        print(f"For Game {game_id} with target size = {target}:\n{my_map}")
     else:
         print(f"No moves yet for {game_id}")
 
@@ -339,8 +354,8 @@ def show_game_map():
 def show_game_board():
     print("Getting the game board...\n")
     game_id = input("Game ID: ")
-    my_board = phc.get_game_board(game_id)
-    print(my_board)
+    my_board, target = phc.get_game_board(game_id)
+    print(f"For Game {game_id} with target size = {target}:\n{my_board}")
 
 
 # Using the project HTTP client is possible here if the project is run as a script

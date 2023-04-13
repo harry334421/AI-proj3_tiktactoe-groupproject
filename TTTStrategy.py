@@ -1,21 +1,21 @@
 '''
 Strategy Functions
 '''
-import math 
+import math
 import numpy as np
 
-#Function to Check Winner 
+#Function to Check Winner
 #Now Only Checks the Around Last Action, which is reasonable
-def check_winner(self, board, target, row, col):
+def check_winner(board, target, row, col):
     rows, cols = board.shape
-    diag1=col-row
-    pos1=row if diag1>=0 else col 
+    #diag1=col-row
+    #pos1=row if diag1>=0 else col
     diag2=(cols-1-col)-row
     pos2=row if diag2>0 else (cols-1-col)
     # Check rows
     for j in range(max(0, row-target+1), cols - target + 1):
         window = board[row, j:j + target]
-        if self.np.all(window == 1):
+        if np.all(window == 1):
             return 1
         elif np.all(window == -1):
             return -1
@@ -50,27 +50,33 @@ def is_winning_move(board, target, row, col):
 
 #Rank Moves that is closer to last moves
 def rank_moves(possible_moves, last_moves):
+    print(f"len(last_moves)={len(last_moves)}")
     last_moves=last_moves+last_moves if len(last_moves)==1 else last_moves
-    #print(f"possible_moves={possible_moves},last_moves={last_moves}")
+    print(f"possible_moves={possible_moves},last_moves={last_moves}")
     dist1 = []
     dist2 = []
 
     # TODO - Exceptions here:
     # Exception: tuple indices must be integers or slices, not str
-    for move in possible_moves:
-        #print(f"move={move}, last_moves[0]={last_moves[0]},  last_moves[1]={last_moves[1]}")
-        lm0x = int(last_moves[0]['moveX'])
-        lm0y = int(last_moves[0]['moveY'])
-        last_move0 = (lm0x, lm0y)
-        last_move1 = (int(last_moves[1]['moveX']),  int(last_moves[1]['moveY']))
-        print(f"lastmove0={last_move0}, lastmove1={last_move1}")
-        dist1.append([max(abs(move[0]-last_move0[0])),abs(move[1]-last_move0[1])])
-        dist2.append([max(abs(move[0]-last_move1[0])),abs(move[1]-last_move1[1])])
+#    for move in possible_moves:
+#        print(f"move={move}, last_moves={last_moves}")
+#    lm0x = int(last_moves[0]['moveX'])
+#    lm0y = int(last_moves[0]['moveY'])
+#    last_move0 = (lm0x, lm0y)
+    last_move0 = (int(last_moves[0]['moveX']),  int(last_moves[0]['moveY']))
+    last_move1 = (int(last_moves[1]['moveX']),  int(last_moves[1]['moveY']))
+#        print(f"lastmove0={last_move0}, lastmove1={last_move1}")
+#        print(f"{abs(move[0]-last_move0[0])}")#,abs(move[1]-last_move0[1])])
+#        print(f"{abs(move[1]-last_move0[1])}")
+#        dist1.append([max(abs(move[0]-last_move0[0])),abs(move[1]-last_move0[1])])
+#        dist2.append([max(abs(move[0]-last_move1[0])),abs(move[1]-last_move1[1])])
+#        print(dist1)
+#        print(dist2)
 
-    #dist1=[max(abs(move[0]-last_moves[0]),abs(move[1]-last_moves[1])) for move in possible_moves]
-    #print(dist1)
-    #dist2=[max(abs(move[0]-last_moves[1][0]),abs(move[1]-last_moves[1][1])) for move in enumerate(possible_moves)]
-    #print(dist2)
+    dist1=[max(abs(move[0]-last_move0[0]),abs(move[1]-last_move0[1])) for move in possible_moves]
+    print(f"dist1={dist1}")
+    dist2=[max(abs(move[0]-last_move1[0]),abs(move[1]-last_move1[1])) for move in possible_moves]
+    print(f"dist2={dist2}")
     min_dist=[min(d1,d2) for d1, d2 in zip(dist1, dist2)]
     '''
     print(min_dist)
@@ -391,170 +397,6 @@ def find_1way_unblocked_sequences(board, target, required_length, player, max_ga
                                 if seq not in unblocked_list:
                                     unblocked_list.append(seq)
                                     unblocked_count += 1
-        
-        #Anti-Diagonal
-        for idx0 in range(board.shape[0]):
-            for dr in [-1,1]:
-                array = self.np.fliplr(board).diagonal(idx0*dr)
-                for window_length in window_lengths:
-                    if len(array) >= window_length:
-                        for idx1 in range(len(array)-window_length+1):
-                            window = array[idx1:idx1+window_length]
-                            if all(val != -player for val in window) and sum(val == player for val in window) == required_length:
-                                min_idx = list(window).index(player)
-                                max_idx = len(window) - 1 - required_length
-                                gaps = max_idx - min_idx + 1 - sum(window)
-                                if gaps <= 1 and min_idx != 0 and max_idx != len(window)-1:
-                                    seq = []
-                                    for idx2, role in enumerate(window):
-                                        if role == player and dr == 1:
-                                            seq.append((board.shape[0] - 1 - (idx1+idx2), idx0+idx1+idx2))
-                                        elif role == player and dr == -1:
-                                            seq.append((board.shape[0] - 1 - (idx0+idx1+idx2), idx1+idx2))
-                                    if seq not in unblocked_list:
-                                        unblocked_list.append(seq)
-                                        unblocked_count += 1
-        return unblocked_count, unblocked_list
-
-def find_1way_unblocked_sequences(self, board, target, required_length, player, max_gap=1):
-    
-    window_lengths=[]
-    for gap in range(max_gap+1):
-        window_lengths.append(min(max(required_length+gap+2, target),board.shape[1]))
-    window_lengths=list(set(window_lengths))
-    #Player
-    unblocked_count=0
-    unblocked_list=[]
-    #Check Row
-    for row in range(board.shape[0]):
-        #print(f"Row: {row}")
-        array=board[row]
-        for window_length in window_lengths:
-            for idx1 in range(len(array)-window_length+2):
-                window=array[idx1:idx1+window_length]
-                #print(window)
-                if (sum(val == -player for val in window)==1 and (window[0]==-player or window[-1]==-player)) and sum(val == player for val in window)==required_length:
-                    flag_idx=list(window).index(-player)
-                    min_idx=list(window).index(player)
-                    max_idx=len(window) -1 - list(window)[::-1].index(player)
-                    gaps=max_idx-min_idx+1-required_length
-                    #print(f"Min Index:{min_idx}, Max Index:{max_idx}, Gaps:{gaps}")
-                    if gaps<=1 and (min_idx==flag_idx+1 or max_idx==flag_idx-1):
-                        seq=[]
-                        for idx2, role in enumerate(window):
-                            if role==player:
-                                seq.append((row, idx1+idx2))
-                        if seq not in unblocked_list:
-                            unblocked_list.append(seq)
-                            unblocked_count+=1
-                elif (sum(val == -player for val in window)==0 and (idx1==0 or idx1+window_length==board.shape[1])) and sum(val == player for val in window)==required_length:
-                    min_idx=list(window).index(player)
-                    max_idx=len(window) -1 - list(window)[::-1].index(player)
-                    gaps=max_idx-min_idx+1-required_length
-                    #print(f"Min Index:{min_idx}, Max Index:{max_idx}, Gaps:{gaps}")
-                    if gaps<=1 and (min_idx==0 or max_idx==len(window)-1):
-                        seq=[]
-                        for idx2, role in enumerate(window):
-                            if role==player:
-                                seq.append((row, idx1+idx2))
-                        if seq not in unblocked_list:
-                            unblocked_list.append(seq)
-                            unblocked_count+=1
-    #Check Column
-    for col in range(board.shape[1]):
-        array = board[:, col]
-        for window_length in window_lengths:
-            for idx1 in range(len(array)-window_length+2):
-                window = array[idx1:idx1+window_length]
-                if (self.np.count_nonzero(window == -player) == 1 and (window[0] == -player or window[-1] == -player)) and self.np.count_nonzero(window == player) == required_length:
-                    flag_idx = self.np.where(window == -player)[0][0]
-                    min_idx = self.np.where(window == player)[0][0]
-                    max_idx = len(window) - 1 - self.np.where(window[::-1] == player)[0][0]
-                    gaps = max_idx - min_idx + 1 - required_length
-                    if gaps <= 1 and (min_idx == flag_idx+1 or max_idx == flag_idx-1):
-                        seq = []
-                        for idx2, role in enumerate(window):
-                            if role == player:
-                                seq.append((idx1+idx2, col))
-                        if seq not in unblocked_list:
-                            unblocked_list.append(seq)
-                            unblocked_count += 1
-                elif (self.np.count_nonzero(window == -player) == 0 and (idx1 == 0 or idx1+window_length == len(board))) and self.np.count_nonzero(window == player) == required_length:
-                    min_idx = self.np.where(window == player)[0][0]
-                    max_idx = len(window) - 1 - self.np.where(window[::-1] == player)[0][0]
-                    gaps = max_idx - min_idx + 1 - required_length
-                    if gaps <= 1 and (min_idx == 0 or max_idx == len(window)-1):
-                        seq = []
-                        for idx2, role in enumerate(window):
-                            if role == player:
-                                seq.append((idx1+idx2, col))
-                        if seq not in unblocked_list:
-                            unblocked_list.append(seq)
-                            unblocked_count += 1
-    #Diagonal
-    for idx0 in range(board.shape[0]):
-        for dr in [-1,1]:
-            array = self.np.diagonal(board, idx0 * dr)
-            for window_length in window_lengths:
-                if len(array) >= window_length:
-                    for idx1 in range(len(array) - window_length + 2):
-                        window = array[idx1:idx1+window_length]
-                        if (self.np.count_nonzero(window == -player) == 1 and (window[0] == -player or window[-1] == -player)) and self.np.count_nonzero(window == player) == required_length:
-                            flag_idx = self.np.where(window == -player)[0][0]
-                            min_idx = self.np.where(window == player)[0][0]
-                            max_idx = self.np.where(window == player)[0][-1]
-                            gaps = max_idx - min_idx + 1 - required_length
-                            if gaps <= 1 and (min_idx == flag_idx + 1 or max_idx == flag_idx - 1):
-                                seq = []
-                                for idx2, role in enumerate(window):
-                                    if role == player and dr == 1:
-                                        seq.append((idx1+idx2, idx0+idx1+idx2))
-                                    elif role == player and dr == -1:
-                                        seq.append((idx0+idx1+idx2, idx1+idx2))
-                                if seq not in unblocked_list:
-                                    unblocked_list.append(seq)
-                                    unblocked_count += 1
-                        elif (self.np.count_nonzero(window == -player) == 0 and (idx1 == 0 or idx1+window_length == len(board))) and self.np.count_nonzero(window == player) == required_length:
-                            min_idx = self.np.where(window == player)[0][0]
-                            max_idx = self.np.where(window == player)[0][-1]
-                            gaps = max_idx - min_idx + 1 - required_length
-                            if gaps <= 1 and (min_idx == 0 or max_idx == len(window)-1):
-                                seq = []
-                                for idx2, role in enumerate(window):
-                                    if role == player and dr == 1:
-                                        seq.append((idx1+idx2, idx0+idx1+idx2))
-                                    elif role == player and dr == -1:
-                                        seq.append((idx0+idx1+idx2, idx1+idx2))
-                                if seq not in unblocked_list:
-                                    unblocked_list.append(seq)
-                                    unblocked_count += 1
-    #Anti-Diagonal
-    for idx0 in range(board.shape[0]):
-        for dr in [-1, 1]:
-            array = self.np.fliplr(board).diagonal(idx0 * dr)
-            for window_length in window_lengths:
-                if len(array) >= window_length:
-                    for idx1 in range(len(array) - window_length + 1):
-                        window = array[idx1 : idx1 + window_length]
-                        if (
-                            (sum(val == -player for val in window) == 1 and (window[0] == -player or window[-1] == -player))
-                            and sum(val == player for val in window) == required_length
-                        ):
-                            flag_idx = list(window).index(-player)
-                            min_idx = list(window).index(player)
-                            max_idx = len(window) - 1 - list(window)[::-1].index(player)
-                            gaps = max_idx - min_idx + 1 - required_length
-                            # print(f"Min Index:{min_idx}, Max Index:{max_idx}, Gaps:{gaps}")
-                            if gaps <= 1 and (min_idx == flag_idx + 1 or max_idx == flag_idx - 1):
-                                seq = []
-                                for idx2, role in enumerate(window):
-                                    if role == player and dr == 1:
-                                        seq.append((len(board) - 1 - (idx1 + idx2), idx0 + idx1 + idx2))
-                                    elif role == player and dr == -1:
-                                        seq.append((len(board) - 1 - (idx0 + idx1 + idx2), idx1 + idx2))
-                                if seq not in unblocked_list:
-                                    unblocked_list.append(seq)
-                                    unblocked_count += 1
                         elif (
                             (sum(val == -player for val in window) == 0 and (idx1 == 0 or idx1 + window_length == len(board)))
                             and sum(val == player for val in window) == required_length
@@ -576,50 +418,50 @@ def find_1way_unblocked_sequences(self, board, target, required_length, player, 
     return unblocked_count, unblocked_list
 
 # Board Evaluator Functions
-def evaluate1(self, board, target):
-    #Base for Exponential 
+def evaluate1(board, target):
+    #Base for Exponential
     base = target**2+1
-    
-    #Board Size 
+
+    #Board Size
     rows, cols=board.shape
-    
+
     # Calculate score for rows
-    row_scores = self.np.zeros(rows, dtype='float64')
+    row_scores = np.zeros(rows, dtype='float64')
     for j in range(cols-target+1):
         sub_board=board[:,j:j+target]
-        flag_x = self.np.max(self.np.where(sub_board == 1, 1, 0),axis=1)
-        flag_o = self.np.min(self.np.where(sub_board == -1, -1, 0),axis=1)
+        flag_x = np.max(np.where(sub_board == 1, 1, 0),axis=1)
+        flag_o = np.min(np.where(sub_board == -1, -1, 0),axis=1)
         flag=flag_x+flag_o
-        row_scores+=self.np.power(base, self.np.sum(sub_board*flag[:, self.np.newaxis], axis=1))*flag
-    score = self.np.sum(row_scores)
+        row_scores+=np.power(base, np.sum(sub_board*flag[:, np.newaxis], axis=1))*flag
+    score = np.sum(row_scores)
     #print(score)
     # Calculate score for columns
-    col_scores = self.np.zeros(cols, dtype='float64')
+    col_scores = np.zeros(cols, dtype='float64')
     for i in range(rows-target+1):
         sub_board=board[i:i+target,:]
-        flag_x = self.np.max(self.np.where(sub_board == 1, 1, 0),axis=0)
-        flag_o = self.np.min(self.np.where(sub_board == -1, -1, 0),axis=0)
+        flag_x = np.max(np.where(sub_board == 1, 1, 0),axis=0)
+        flag_o = np.min(np.where(sub_board == -1, -1, 0),axis=0)
         flag=flag_x+flag_o
-        col_scores+=self.np.power(base, self.np.sum(sub_board*flag[:, self.np.newaxis].T, axis=0))*flag
-    score += self.np.sum(col_scores)
+        col_scores+=np.power(base, np.sum(sub_board*flag[:, np.newaxis].T, axis=0))*flag
+    score += np.sum(col_scores)
     #print(score)
     # Calculate score for diagonals
     for idx in range(rows-target+1):
         idx_list=list(set([idx,-idx]))
-        sub_board1=[self.np.diagonal(board, offset=i) for i in idx_list] #Diagonal
-        sub_board2=[self.np.diagonal(self.np.fliplr(board), offset=i) for i in idx_list] #Anti-Diagonal
-        diag_board=self.np.array(sub_board1+sub_board2)
+        sub_board1=[np.diagonal(board, offset=i) for i in idx_list] #Diagonal
+        sub_board2=[np.diagonal(np.fliplr(board), offset=i) for i in idx_list] #Anti-Diagonal
+        diag_board=np.array(sub_board1+sub_board2)
         d_rows, d_cols=diag_board.shape
-        row_scores = self.np.zeros(d_rows, dtype='float64')
+        row_scores = np.zeros(d_rows, dtype='float64')
         #print(row_scores)
         for i in range(d_cols-target+1):
             sub_board=diag_board[:,i:i+target]
             #print(sub_board)
-            flag_x = self.np.max(self.np.where(sub_board == 1, 1, 0),axis=1)
-            flag_o = self.np.min(self.np.where(sub_board == -1, -1, 0),axis=1)
+            flag_x = np.max(np.where(sub_board == 1, 1, 0),axis=1)
+            flag_o = np.min(np.where(sub_board == -1, -1, 0),axis=1)
             flag=flag_x+flag_o
-            row_scores+=self.np.power(base, self.np.sum(sub_board*flag[:, self.np.newaxis], axis=1))*flag
-        score += self.np.sum(row_scores)
+            row_scores+=np.power(base, np.sum(sub_board*flag[:, np.newaxis], axis=1))*flag
+        score += np.sum(row_scores)
     return score
 
 def evaluate2(board, target):
@@ -774,6 +616,7 @@ def evaluate(board, target, evaluator):
         return evaluate4(board,target)
 
 def minmax(board, depth, row, col, is_maximizing, target, alpha, beta, max_depth, last_moves, evaluator):
+    print(f"minmax: board={board}, target={target}, row={row}, col={col}")
     winner = check_winner(board, target, row, col)
     if winner == 1:
         return math.inf
@@ -784,6 +627,7 @@ def minmax(board, depth, row, col, is_maximizing, target, alpha, beta, max_depth
     elif depth >= max_depth:
         return evaluate(board, target, evaluator)
     #Rank Possible Moves
+    print("About to try rank_moves()...")
     ranked_moves=rank_moves(get_possible_moves(board), last_moves)
     if is_maximizing:
         best_score = -float('inf')
