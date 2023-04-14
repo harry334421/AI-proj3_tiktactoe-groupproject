@@ -56,7 +56,6 @@ def make_move(board, is_maximizing, target, last_moves, evaluator, timeout, min_
     pool_tuple=[(iqueue, rqueue) for _ in range(cpu)]
     pool.starmap_async(move_worker, pool_tuple)
 
-    #print(possible_moves)
     #Get Possible Moves
     possible_moves=strategy.get_possible_moves(board)
 
@@ -145,19 +144,17 @@ def make_move(board, is_maximizing, target, last_moves, evaluator, timeout, min_
             return random.choice(opponent_winning_move[idx]), None
 
     #Start the IDS Process
-    #MinMax with Iterative Deepenining
+    #MinMax with Iterative Deepening
     max_depth=min_depth
     depth_res_count={max_depth:0}
     best_move[max_depth]=[]
     alpha[max_depth]=-float('inf')
     beta[max_depth]=float('inf')
     score_map={max_depth:[[None]*len(board) for _ in range(len(board))]}
-    #counter=0
     beta_cutoff=None
     idx=0
     skip=False
-    #print(ranked_moves)
-    #print(board)
+
     while True:
         if time.time()-start_time>timeout:
             pool.terminate()
@@ -167,10 +164,7 @@ def make_move(board, is_maximizing, target, last_moves, evaluator, timeout, min_
             if skip==False:
                 last_last_move = (int(last_moves[-1]['moveX']),  int(last_moves[-1]['moveY']))
                 new_last_moves = [last_last_move,  ranked_moves[idx]]
-                #print(f"ranked_moves={ranked_moves},  idx={idx}, new_last_moves={new_last_moves}")
-#                #print(f"Input Data:{(ranked_moves[idx][0], ranked_moves[idx][1], board, is_maximizing, target, max_depth, alpha[max_depth], beta[max_depth], player, new_last_moves)}")
                 iqueue.put_nowait((1, (ranked_moves[idx][0], ranked_moves[idx][1], board, is_maximizing, target, max_depth, alpha[max_depth], beta[max_depth], new_last_moves, evaluator)))
-#                #print(f"Input Data {possible_moves[idx]}")
                 if idx==len(ranked_moves)-1:
                     max_depth=int(max_depth+1)
                     depth_res_count[max_depth]=0
@@ -179,11 +173,9 @@ def make_move(board, is_maximizing, target, last_moves, evaluator, timeout, min_
                     beta[max_depth]=float('inf')
                     score_map[max_depth]=[[None]*len(board) for _ in range(len(board))]
                     if max_depth>=len(ranked_moves):
-                        #print("Max Depth Reached")
                         skip=True
                         max_depth=max(max_depth-1,min_depth)
                 idx= idx+1 if idx!=len(ranked_moves)-1 else 0
-                #print(f"Index {idx}")
         except:
             pass
         try:
@@ -196,26 +188,22 @@ def make_move(board, is_maximizing, target, last_moves, evaluator, timeout, min_
             elif is_maximizing and score == alpha[depth]:
                 best_move[depth].append((i, j))
             elif not is_maximizing and score < beta[depth]:
-                #print(f"Update Beta: Current {beta[depth]} New {score}")
-                #print(f"Move added: {(i, j)}")
                 beta[depth] = score
                 best_move[depth] = [(i, j)]
             elif not is_maximizing and score == beta[depth]:
-                #print(f"Move {(i,j)} added to best_move[depth]")
                 best_move[depth].append((i, j))
+
             if beta[depth]<=alpha[depth]:
                 pool.terminate()
                 pool.join()
                 beta_cutoff=depth
                 break
+
         except:
             if depth_res_count[max_depth]==len(ranked_moves) and max_depth==len(ranked_moves)-1:
                 pool.terminate()
                 pool.join()
                 break
-    #print(max_depth)
-    #print(depth_res_count)
-
 
     #Beta Cutoff
     if beta_cutoff is not None:
@@ -225,10 +213,9 @@ def make_move(board, is_maximizing, target, last_moves, evaluator, timeout, min_
         pool.terminate()
         pool.join()
         return random.choice(best_move[beta_cutoff]), None
+
     #Check Results
     res_depth=0
-    #print("Result Depth Count:", depth_res_count)
-    #print("Possible moves: ",len(possible_moves))
     for idx, key in enumerate(sorted(list(depth_res_count.keys()), reverse=True)):
         if depth_res_count[key]==len(possible_moves):
             res_depth=key
@@ -247,7 +234,8 @@ def make_move(board, is_maximizing, target, last_moves, evaluator, timeout, min_
         for col,con in enumerate(row):
             print(f"{con} ", end="")
         print("")
-#    '''
+    '''
+
     #try close all remaining pool if exists
     try:
         pool.terminate()
@@ -255,14 +243,5 @@ def make_move(board, is_maximizing, target, last_moves, evaluator, timeout, min_
     except:
         pass
 
-    # TODO - Temporary
-    row = 0
-    col = 0
-    while True:
-        row = random.randrange(len(board))
-        col = random.randrange(len(board))
-        if board[row][col] == 0:
-            break
-    return (row, col),  None
-#    #Return Best Move if None above
-#    return random.choice(best_move[res_depth]), min(max(res_depth-1,min_depth), max(len(ranked_moves)-2,0))
+    # Return Best Move if None above
+    return random.choice(best_move[res_depth]), min(max(res_depth-1,min_depth), max(len(ranked_moves)-2,0))

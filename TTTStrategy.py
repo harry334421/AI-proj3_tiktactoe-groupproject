@@ -91,13 +91,12 @@ def pattern_check(board, target,is_maximizing, i, j,  start_time):
     player_winning_move = {0: (-1,-1), 1:[], 2:[], 3:[], 4:[]}
     opponent_winning_move = {0: (-1,-1), 1:[], 2:[], 3:[], 4:[]}
     board[i][j] = 1 if is_maximizing else -1
+
     #S0 (Immediate Winning): Take the winning move if available
     if is_winning_move(board, target, i, j):
         player_winning_move[0] = (i, j)
-        #delta=time.time() - start_time
-        #print(f"Move time: {'{:.2f}s'.format(delta)}")
-        #print("Winning Move.")
         return player_winning_move, opponent_winning_move
+
     board[i][j] = 0
     #S0 (Immediate Winning) Check if the opponent has a winning move
     # Block opponent's winning move if needed
@@ -106,16 +105,19 @@ def pattern_check(board, target,is_maximizing, i, j,  start_time):
         opponent_winning_move[0] = (i, j)
         board[i][j] = 0
         return player_winning_move, opponent_winning_move
+
     board[i][j] = 0
     if target>=len(board)-1:
         return player_winning_move, opponent_winning_move
-    #Chek for Additional Patterns for Player
+
+    #Check for Additional Patterns for Player
     board[i][j] = 1 if is_maximizing else -1
     tmp_immediate_winning_move=intermediate_winning_pattern(board, target, i, j, is_maximizing)
     for idx in range(1, 5):
         player_winning_move[idx]+=tmp_immediate_winning_move[idx]
     board[i][j] = 0
-    #Chek for Additional Patterns for Opponent
+
+    #Check for Additional Patterns for Opponent
     board[i][j] = -1 if is_maximizing else 1
     tmp_immediate_winning_move=intermediate_winning_pattern(board, target, i, j, not is_maximizing)
     for idx in range(1, 5):
@@ -128,12 +130,14 @@ def intermediate_winning_pattern(board, target, row, col, player):
     player=1 if player else -1
     #results holder
     intermediate_winning_move={1:[], 2:[], 3:[], 4:[]}
+
     #One T-1 Sequence Two-Way Unblocked
     count_2w_tm1, count_2w_tm1_seq=find_2way_unblocked_sequences(board, target, target-1, player, max_gap=0)
     for seq in count_2w_tm1_seq:
         if (row, col) in seq:
             intermediate_winning_move[1].append((row,col))
             break
+
     #Two T-1 Sequence One-Way Unblocked
     count_1w_tm1, count_1w_tm1_seq=find_1way_unblocked_sequences(board, target, target-1, player)
     counter=0
@@ -141,6 +145,7 @@ def intermediate_winning_pattern(board, target, row, col, player):
         if (row, col) in seq: counter+=1
         if counter==2:
             intermediate_winning_move[1].append((row,col))
+
     #One T-1 Sequence One-Way Blocked and one T-2 Sequence Two-way Unblocked
     count_2w_tm2, count_2w_tm2_seq=find_1way_unblocked_sequences(board, target, target-1, player)
     for seq1 in count_1w_tm1_seq:
@@ -148,12 +153,14 @@ def intermediate_winning_pattern(board, target, row, col, player):
             for seq2 in count_2w_tm2_seq:
                 if (row, col) in seq2:
                     intermediate_winning_move[2].append((row,col))
+
     #Two T-2 Sequence Two-Way Unblocked
     counter=0
     for seq in count_2w_tm2_seq:
         if (row, col) in seq: counter+=1
         if counter==2:
             intermediate_winning_move[3].append((row,col))
+
     #One T-2 Sequence Two-Way Unblocked and One T-2 Sequence One-Way Unblocked
     count_1w_tm2, count_1w_tm2_seq=find_1way_unblocked_sequences(board, target, target-2, player)
     for seq in count_2w_tm2_seq:
@@ -161,6 +168,7 @@ def intermediate_winning_pattern(board, target, row, col, player):
             for seq2 in count_1w_tm2_seq:
                     if (row, col) in seq2:
                         intermediate_winning_move[4].append((row,col))
+
     return intermediate_winning_move
 
 ##Ancillary Function to Check Unblocked Sequences
@@ -279,7 +287,6 @@ def find_1way_unblocked_sequences(board, target, required_length, player, max_ga
                     min_idx=list(window).index(player)
                     max_idx=len(window) -1 - list(window)[::-1].index(player)
                     gaps=max_idx-min_idx+1-required_length
-                    #print(f"Min Index:{min_idx}, Max Index:{max_idx}, Gaps:{gaps}")
                     if gaps<=1 and (min_idx==flag_idx+1 or max_idx==flag_idx-1):
                         seq=[]
                         for idx2, role in enumerate(window):
@@ -292,7 +299,6 @@ def find_1way_unblocked_sequences(board, target, required_length, player, max_ga
                     min_idx=list(window).index(player)
                     max_idx=len(window) -1 - list(window)[::-1].index(player)
                     gaps=max_idx-min_idx+1-required_length
-                    #print(f"Min Index:{min_idx}, Max Index:{max_idx}, Gaps:{gaps}")
                     if gaps<=1 and (min_idx==0 or max_idx==len(window)-1):
                         seq=[]
                         for idx2, role in enumerate(window):
@@ -301,6 +307,7 @@ def find_1way_unblocked_sequences(board, target, required_length, player, max_ga
                         if seq not in unblocked_list:
                             unblocked_list.append(seq)
                             unblocked_count+=1
+
     #Check Column
     for col in range(board.shape[1]):
         array = board[:, col]
@@ -369,6 +376,7 @@ def find_1way_unblocked_sequences(board, target, required_length, player, max_ga
                                 if seq not in unblocked_list:
                                     unblocked_list.append(seq)
                                     unblocked_count += 1
+
     #Anti-Diagonal
     for idx0 in range(board.shape[0]):
         for dr in [-1, 1]:

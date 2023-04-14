@@ -31,11 +31,11 @@ LIST_GAMES = '1'
 LIST_TEAMS = '1a'
 CREATE_NEW_GAME = '2'
 PLAY_SINGLE_MOVE = '3'
-PLAY_WHOLE_EXISTING_GAME = '3a'
-SHOW_GAME_MOVES = '4'
-SHOW_GAME_MAP = '5'
-SHOW_GAME_BOARD = '6'
-EXIT_PROJECT3 = '7'
+PLAY_WHOLE_EXISTING_GAME = '4'
+SHOW_GAME_MOVES = '5'
+SHOW_GAME_MAP = '6'
+SHOW_GAME_BOARD = '7'
+EXIT_PROJECT3 = '8'
 
 main_menu = {}
 main_menu[LIST_GAMES] ="List games"
@@ -156,11 +156,11 @@ def is_my_turn(game_id,  server_player1,  server_player2):
         last_move = my_moves[0]
         last_team_id = int(last_move['teamId'])
         if (last_team_id == server_player1):
-            print(f"It is Player 2 ({server_player2})'s turn")
+            print(f"\nIt is Player 2 ({server_player2})'s turn")
             current_team_id = server_player2
             current_team_value = -1
         else:
-            print(f"It is Player 1 ({server_player1})'s turn")
+            print(f"\nIt is Player 1 ({server_player1})'s turn")
             current_team_id = server_player1
             current_team_value = 1
 
@@ -260,7 +260,7 @@ def play_existing_game():
     server_players_raw = my_games[game_id].split(':')
     server_player1 = int(server_players_raw[0]) # Maximizing player
     server_player2 = int(server_players_raw[1]) # Minimizing player
-    print(f"Server: For game {game_id}, player1={server_player1}, player2={server_player2}")
+    print(f"Server: For game {game_id}, player1={server_player1}, player2={server_player2}\n")
 
     existing_moves = phc.get_moves(game_id,  1)
     # If a move exists, it is possible that the game is over already
@@ -326,6 +326,7 @@ def play_existing_game():
             traceback.print_exc(file=sys.stdout)
             print("-"*60)
 
+        # Give the server some time to react
         time.sleep(5)
 
 

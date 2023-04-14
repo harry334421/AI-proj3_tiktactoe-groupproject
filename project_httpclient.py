@@ -130,7 +130,6 @@ class ProjectHttpClient:
             print(f"Server game non-JSON response: {raw_response.text}")
             return board_map
 
-        print(response)
         if ( response['code'] == 'OK'):
             board_map = response['output']
             target = int(response['target'])
@@ -161,7 +160,6 @@ class ProjectHttpClient:
             print(f"Server game non-JSON response: {raw_response.text}")
             return board
 
-        print(response)
         if ( response['code'] == 'OK'):
             board = response['output']
             target = int(response['target'])
