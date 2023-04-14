@@ -19,11 +19,9 @@ def move_worker(input_queue, result_queue):
             func_type, data = input_queue.get()
             if func_type==1:
                 i, j, board, is_maximizing, target, max_depth, alpha, beta, last_moves, evaluator = data
-                #print(f"Get Data for Move @ ({i,j} @ Depth {max_depth})")
                 board[i][j] = 1 if is_maximizing else -1
                 score = strategy.minmax(board, 0, i, j, not is_maximizing, target, alpha, beta, max_depth, last_moves, evaluator)
                 board[i][j] = 0
-                #print(f"Scoring: {(i, j, max_depth, score)}")
                 result_queue.put((func_type, (i, j, max_depth, score)))
             elif func_type==2:
                 board, target, is_maximizing, i, j, start_time = data
@@ -39,7 +37,7 @@ def move_worker(input_queue, result_queue):
 Function to Determine a Move
 '''
 def make_move(board, is_maximizing, target, last_moves, evaluator, timeout, min_depth):
-    cpu=1 # TODO - For testing #cpu_count()-1
+    cpu=cpu_count()-1
     start_time = time.time()
     best_move={}
     alpha={}
@@ -154,7 +152,7 @@ def make_move(board, is_maximizing, target, last_moves, evaluator, timeout, min_
     alpha[max_depth]=-float('inf')
     beta[max_depth]=float('inf')
     score_map={max_depth:[[None]*len(board) for _ in range(len(board))]}
-    counter=0
+    #counter=0
     beta_cutoff=None
     idx=0
     skip=False
@@ -169,7 +167,7 @@ def make_move(board, is_maximizing, target, last_moves, evaluator, timeout, min_
             if skip==False:
                 last_last_move = (int(last_moves[-1]['moveX']),  int(last_moves[-1]['moveY']))
                 new_last_moves = [last_last_move,  ranked_moves[idx]]
-                print(f"ranked_moves={ranked_moves},  idx={idx}, new_last_moves={new_last_moves}")
+                #print(f"ranked_moves={ranked_moves},  idx={idx}, new_last_moves={new_last_moves}")
 #                #print(f"Input Data:{(ranked_moves[idx][0], ranked_moves[idx][1], board, is_maximizing, target, max_depth, alpha[max_depth], beta[max_depth], player, new_last_moves)}")
                 iqueue.put_nowait((1, (ranked_moves[idx][0], ranked_moves[idx][1], board, is_maximizing, target, max_depth, alpha[max_depth], beta[max_depth], new_last_moves, evaluator)))
 #                #print(f"Input Data {possible_moves[idx]}")
@@ -185,7 +183,7 @@ def make_move(board, is_maximizing, target, last_moves, evaluator, timeout, min_
                         skip=True
                         max_depth=max(max_depth-1,min_depth)
                 idx= idx+1 if idx!=len(ranked_moves)-1 else 0
-                print(f"Index {idx}")
+                #print(f"Index {idx}")
         except:
             pass
         try:

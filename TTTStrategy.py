@@ -70,33 +70,12 @@ def is_winning_move(board, target, row, col):
 
 #Rank Moves that is closer to last moves
 def rank_moves(possible_moves, last_moves):
-    print(f"len(last_moves)={len(last_moves)}")
     last_moves=last_moves+last_moves if len(last_moves)==1 else last_moves
-    print(f"possible_moves={possible_moves},last_moves={last_moves}")
     dist1 = []
     dist2 = []
 
-    # TODO - Exceptions here:
-    # Exception: tuple indices must be integers or slices, not str
-#    for move in possible_moves:
-#        print(f"move={move}, last_moves={last_moves}")
-#    lm0x = int(last_moves[0]['moveX'])
-#    lm0y = int(last_moves[0]['moveY'])
-#    last_move0 = (lm0x, lm0y)
-#    last_move0 = (int(last_moves[0]['moveX']),  int(last_moves[0]['moveY']))
-#    last_move1 = (int(last_moves[1]['moveX']),  int(last_moves[1]['moveY']))
-#        print(f"lastmove0={last_move0}, lastmove1={last_move1}")
-#        print(f"{abs(move[0]-last_move0[0])}")#,abs(move[1]-last_move0[1])])
-#        print(f"{abs(move[1]-last_move0[1])}")
-    #dist1.append([max(abs(move[0]-last_move0[0])),abs(move[1]-last_move0[1])])
-    #dist2.append([max(abs(move[0]-last_move1[0])),abs(move[1]-last_move1[1])])
-#        print(dist1)
-#        print(dist2)
-
     dist1=[max(abs(move[0]-last_moves[0][0]),abs(move[1]-last_moves[0][1])) for move in possible_moves]
-    print(f"dist1={dist1}")
     dist2=[max(abs(move[0]-last_moves[1][0]),abs(move[1]-last_moves[1][1])) for move in possible_moves]
-    print(f"dist2={dist2}")
     min_dist=[min(d1,d2) for d1, d2 in zip(dist1, dist2)]
     '''
     print(min_dist)
@@ -636,7 +615,6 @@ def evaluate(board, target, evaluator):
         return evaluate4(board,target)
 
 def minmax(board, depth, row, col, is_maximizing, target, alpha, beta, max_depth, last_moves, evaluator):
-    print(f"minmax: board={board}, target={target}, row={row}, col={col}")
     winner = check_winner(board, target, row, col)
     if winner == 1:
         return math.inf
@@ -647,7 +625,6 @@ def minmax(board, depth, row, col, is_maximizing, target, alpha, beta, max_depth
     elif depth >= max_depth:
         return evaluate(board, target, evaluator)
     #Rank Possible Moves
-    print("About to try rank_moves()...")
     ranked_moves=rank_moves(get_possible_moves(board), last_moves)
     if is_maximizing:
         best_score = -float('inf')

@@ -179,7 +179,6 @@ def is_my_turn(game_id,  server_player1,  server_player2):
 #String to NP Array
 def string_to_board(boardstr):
     ele_dict={"X":1, "O":-1, "_":0, "-":0}
-    print(f"boardstr={boardstr}")
     rows=boardstr.split("\n")
     rows.remove("")
     if " " in rows[0]:
@@ -210,7 +209,6 @@ def select_unused_coords(board):
         col = random.randrange(board_size)
         if board[row][col] == 0:
             break
-    #print(f"Selected row={row}, col={col} for board =")
     print_board(board)
 
     return row, col
@@ -274,7 +272,6 @@ def play_existing_game():
         last_col = last_x
         boardstr, _ = phc.get_game_board(game_id)
         board = string_to_board(boardstr)
-        print(f"Checking last move of row={last_row},col={last_col},board={board}, last_move={last_move}")
         current_winner = strategy.check_winner(board, target, last_row,  last_col)
         if current_winner != 0:
             print_winner(current_winner, server_player1,  server_player2,  game_id)
@@ -307,7 +304,6 @@ def play_existing_game():
                 break
 
         # Since the game hasn't finished, make a move
-        # TODO - Use the TTTStrategy, TTTMover...
         timeout = 30
         is_maximizing = (current_team_id == server_player1)
         if is_maximizing:
