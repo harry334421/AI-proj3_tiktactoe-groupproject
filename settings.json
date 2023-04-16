@@ -1,0 +1,8 @@
+{ 
+    "Evaulator Comments" : "Link playing by a particular team ID to a particular evaluator",
+    "eval_choice" : 
+    { 
+        "1338" : "4", 
+        "1361" : "1"
+    }
+}

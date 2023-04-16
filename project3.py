@@ -17,21 +17,20 @@ import TTTStrategy as strategy
 import TTTMoveMaker as mm
 
 import argparse
+import json
 import numpy as np
 import os.path
 import random
 import time
 
-# TODO - Temporary
 import sys
-import traceback
+import traceback # For debugging
 
 
 LIST_GAMES = '1'
 LIST_TEAMS = '1a'
 CREATE_NEW_GAME = '2'
-PLAY_SINGLE_MOVE = '3'
-PLAY_WHOLE_EXISTING_GAME = '4'
+PLAY_EXISTING_GAME = '4'
 SHOW_GAME_MOVES = '5'
 SHOW_GAME_MAP = '6'
 SHOW_GAME_BOARD = '7'
@@ -41,17 +40,18 @@ main_menu = {}
 main_menu[LIST_GAMES] ="List games"
 main_menu[LIST_TEAMS] = "List teams"
 main_menu[CREATE_NEW_GAME] ="Create new game"
-main_menu[PLAY_SINGLE_MOVE] ="Play single move"
-main_menu[PLAY_WHOLE_EXISTING_GAME]="Play whole (existing) game"
+main_menu[PLAY_EXISTING_GAME]="Play existing game"
 main_menu[SHOW_GAME_MOVES]="Show moves for existing game"
 main_menu[SHOW_GAME_MAP]="Show map for existing game"
 main_menu[SHOW_GAME_BOARD]="Show board for existing game"
 main_menu[EXIT_PROJECT3]="Exit"
 
 KEY_FILE = 'key.json'
+SETTINGS_FILE = 'settings.json'
 
 my_games = []
 my_game_ids = []
+my_settings = []
 
 
 def print_main_menu():
@@ -243,6 +243,15 @@ def print_winner(winner_value,  server_player1,  server_player2, game_id):
         print(f"Draw for game {game_id}")
 
 
+# Select the appropriate evaluator mentioned in the settings
+def choose_evaluator(team_id):
+    if not str(team_id) in my_settings['eval_choice']:
+        print(f"{team_id} is not listed in the evaluator settings: {my_settings['eval_choice']}")
+        return 0
+    else:
+        return int(my_settings['eval_choice'][str(team_id)])
+
+
 def play_existing_game():
     print("Getting the move list...\n")
 
@@ -254,7 +263,7 @@ def play_existing_game():
         print(f"Error: {game_id} is not in the list of existing games {my_game_ids}")
         return
 
-    _, target = phc.get_game_board(game_id)
+    boardstr, target = phc.get_game_board(game_id)
 
     # Figure out player identities
     server_players_raw = my_games[game_id].split(':')
@@ -270,7 +279,6 @@ def play_existing_game():
         last_y = int(last_move['moveY'])
         last_row = last_y
         last_col = last_x
-        boardstr, _ = phc.get_game_board(game_id)
         board = string_to_board(boardstr)
         current_winner = strategy.check_winner(board, target, last_row,  last_col)
         if current_winner != 0:
@@ -306,10 +314,7 @@ def play_existing_game():
         # Since the game hasn't finished, make a move
         timeout = 30
         is_maximizing = (current_team_id == server_player1)
-        if is_maximizing:
-            evaluator = 1 # Arbitrary
-        else:
-            evaluator = 2 # Also arbitrary
+        evaluator = choose_evaluator(current_team_id)
         last_moves = phc.get_moves(game_id,  2) # make_move requires last two moves
         min_depth=max(min(1, len(strategy.get_possible_moves(board))-1),0)
         try:
@@ -366,11 +371,15 @@ if __name__=='__main__':
                                         help="Play against the dummy server instead of the real one" )
     args = parser.parse_args()
 
+    # 'key.json' contains the necessary authentication headers
     if not os.path.exists(KEY_FILE):
         print(f"Error: No key/header file {KEY_FILE} (Did you copy and fill in the template?)")
         exit(0)
+    elif not os.path.exists(SETTINGS_FILE):
+        print(f"Error: No settings file {SETTINGS_FILE}")
+        exit(0)
 
-    # 'key.json' contains the necessary authentication headers
+    my_settings = json.load(open(SETTINGS_FILE, 'r'))
     phc = ProjectHttpClient(KEY_FILE,  args.dummy)
 
     while True:
@@ -383,9 +392,7 @@ if __name__=='__main__':
             list_teams()
         elif selection == CREATE_NEW_GAME:
             create_new_game()
-        elif selection == PLAY_SINGLE_MOVE:
-            play_single_move()
-        elif selection == PLAY_WHOLE_EXISTING_GAME:
+        elif selection == PLAY_EXISTING_GAME:
             play_existing_game()
         elif selection == SHOW_GAME_MOVES:
             show_game_moves()
