@@ -1,6 +1,6 @@
-# Project 3 Skeleton
+# CSCI 6511 Project 3
 
-This is an attempt to create a solid frame for the Tic-Tac-Toe game that allows it to interact with other engines.
+Project 3 creates a generalized Tic-Tac-Toe game interacts with other engines via a dummy server or via the class server.
 
 ## Packages required
 
@@ -8,17 +8,17 @@ This is an attempt to create a solid frame for the Tic-Tac-Toe game that allows 
 - json
 - urllib
 
-## Running Just the Game Logic
-
-The game logic is in a separate file (mostly for now). You can adjust the board size and have it play against itself
-
-```
-    python3 V9-MinMax+PatternSeeking-TTT-.py
-```
-
 ## Running
 
-First, copy your user id and API key into `key-TEMPLATE.json` and save as `key.json`.
+First, copy your user id and API key into `key-TEMPLATE.json` and save as `key.json`. Also, update your copy of `settings.json` to use your desired evaluator.
+
+### Using the Class Server
+
+No arguments are needed for the single program used:
+
+```
+    python3 project3.py
+```
 
 ### Using the Dummy Server
 
@@ -39,18 +39,9 @@ Now, in the other window, start the client. Please note that you should add the 
     python3 project3.py -d
 ```
 
-### Using the Class Server
+## Changelog
 
-No arguments are needed for the single program used:
-
-```
-    python3 project3.py
-```
-
-## TODOs
-
-- Integrate Eric's logic into separate strategy files
-- Get all commands working against the real server
+A [changelog](CHANGELOG.md) details some of the development process.
 
 ## Troubleshooting
 
@@ -63,17 +54,3 @@ If you get an error like the following,  make sure you begin with `http://` for 
 ```
     requests.exceptions.InvalidSchema: No connection adapters were found for '127.0.0.1:8080'
 ```
-
-
-
-
-#Eric's change log 2023.04.06
-1. Repackaged all strategy related functions into Class TTTStrategy in TTTStrategy.py 
-2. Move maker functions and the parallel worker is now in TTTMoveMaker.py
-3. the project_httpclient.py is now repackaged into TTTAgent.py 
-    a. TTTAgent now handles all communication with the server 
-    b. TTTAgent calls move maker to make moves and then post it back to the server 
-    c. TTTAgent now reads a game setup file (e.g. game-TEMPLATE.json) to start the agent game-TEMPLATE.json has comment in it 
-    d. TTTAgent also reads the header file (e.g. key-TEMPLATE.json) to store info on the HTTP header info, the default file header file name is key.json.
-##Eric's change log 2023.04.06 - v2 
-4. Parallelized pattern check codes and packaged them into a method for TTTStrategy now.
