@@ -96,50 +96,6 @@ def create_new_game():
     phc.create_new_game(board_size,  target_size, team1_id,  team2_id)
 
 
-def play_single_move():
-    game_id = input("Game ID: ")
-    games_list = phc.get_my_games()
-    game_exists = False
-    game_str = ""
-    for game_desc_map in games_list:
-        if game_id in game_desc_map.keys():
-            game_str = game_desc_map[game_id]
-            game_exists = True
-            break
-
-    if not game_exists:
-        print(f"Error: {game_id} is not in the list of current games: {games_list}")
-        # Go back into the main menu
-        return
-
-    # game_str is in format '<player1>:<player2>:<symbol of current player>'
-    game_setup = game_str.split(':')
-    team1_id = int(game_setup[0])
-    team2_id = int(game_setup[1])
-
-    # Good chance that no moves exist yet - shouldn't be an error
-    last_move_raw = phc.get_moves(game_id, 1,  quiet=True)
-    current_team_id = team1_id
-    # If there are no moves yet, it is the first player's turn by default
-    if last_move_raw:
-        last_move = last_move_raw[0]
-        # Switch players if Player 1 just went
-        if int(last_move['teamId']) == current_team_id:
-            current_team_id = team2_id
-
-    # Is it allowable to play? Am I a part of the team playing?
-    if not current_team_id in phc.teams:
-        print(f"Error: Player {phc.my_user_id} is not a member of the current turn's team ({current_team_id})")
-        # Go back to the main menu
-        return
-
-    row = input("Row (y-coordinate): ")
-    col = input("Column (x-coordinate): ")
-    print(f"Playing single move for {current_team_id} (with upper-left as origin)...\n")
-
-    phc.make_move(game_id,  current_team_id, row,  col)
-
-
 # Is it the turn of a team I am part of?
 def is_my_turn(game_id,  server_player1,  server_player2):
     my_turn = False
