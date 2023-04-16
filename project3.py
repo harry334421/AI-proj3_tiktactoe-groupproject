@@ -28,8 +28,8 @@ import traceback # For debugging
 
 
 LIST_GAMES = '1'
-LIST_TEAMS = '1a'
-CREATE_NEW_GAME = '2'
+LIST_TEAMS = '2'
+CREATE_NEW_GAME = '3'
 PLAY_EXISTING_GAME = '4'
 SHOW_GAME_MOVES = '5'
 SHOW_GAME_MAP = '6'
