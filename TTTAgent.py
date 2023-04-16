@@ -1,5 +1,7 @@
+#import random
 import time
 import numpy as np
+#from multiprocessing import Manager, Queue, Pool, cpu_count
 import requests
 import json
 
@@ -27,6 +29,7 @@ class TTTAgent:
         self.gameid=gameid
         self.timeout=timeout
 
+
         if opt==1:
             flag, gameid = self.start_game()
             if flag==True:
@@ -48,8 +51,8 @@ class TTTAgent:
             else:
                 print("Failed to join game. Check Intput.")
 
-        self.min_depth=max(min(1, len(self.ttt.get_possible_moves(board))-1),0)
-        
+        self.min_depth=max(min(1, len(strategy.get_possible_moves(self.board))-1),0)
+
     #Get HTTP Header from File
     def get_header(self, file):
         return json.load(open(file,'r'))
@@ -152,14 +155,14 @@ class TTTAgent:
                             self.print_board()
                         else:
                             time.sleep(self.interval)
-                #Check Winner 
-                winner = self.ttt.check_winner(self.board, self.target, row, col)
-                if winner != 0 or self.ttt.is_full(self.board):
+                #Check Winner
+                winner = strategy.check_winner(self.board, self.target, row, col)
+                if winner != 0 or strategy.is_full(self.board):
                     break
-                #Start my round 
+                #Start my round
                 print("Start my round (O)")
                 #Make A Move
-                (row, col), res_depth = mm.make_move(self.board, True, self.target, last_moves, self.evaluator, self.timeout, self.ttt, self.min_depth)
+                (row, col), res_depth = mm.make_move(self.board, True, self.target, last_moves, self.evaluator, self.timeout, self.min_depth)
                 self.min_depth=res_depth if res_depth!=None else self.min_depth
                 self.board[row][col] = 1
                 last_moves=[last_moves[-1], (row, col)] if len(last_moves)>0 else [(row, col)]
@@ -195,15 +198,14 @@ class TTTAgent:
                             self.print_board()
                         else:
                             time.sleep(self.interval)
-                #Check Winner 
-                winner = self.ttt.check_winner(self.board, self.target, row, col)
-                if winner != 0 or self.ttt.is_full(self.board):
+                #Check Winner
+                winner = strategy.check_winner(self.board, self.target, row, col)
+                if winner != 0 or strategy.is_full(self.board):
                     break
-                #Start My Round 
+                #Start My Round
                 print("Start my round (X)")
-                (row, col), res_depth = mm.make_move(self.board, False, self.target, last_moves, self.evaluator, self.timeout, self.ttt, self.min_depth)
+                (row, col), res_depth = mm.make_move(self.board, False, self.target, last_moves, self.evaluator, self.timeout,  self.min_depth)
                 self.min_depth=res_depth if res_depth!=None else self.min_depth
-
                 self.board[row][col] = -1
                 #Store Last moves
                 last_moves=[last_moves[-1], (row, col)] if len(last_moves)>0 else [(row, col)]
