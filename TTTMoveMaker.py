@@ -106,8 +106,8 @@ def make_move(board, is_maximizing, target, last_moves, evaluator, timeout, min_
                     pool.join()
                     return tmp_player_winning_move[0], None
                 else:
-                    player_winning_move[0]=tmp_player_winning_move[0]
-                    opponent_winning_move[0]=tmp_opponent_winning_move[0]
+                    player_winning_move[0]=tmp_player_winning_move[0] if tmp_player_winning_move[0]!=(-1,-1) else player_winning_move[0]
+                    opponent_winning_move[0]=tmp_opponent_winning_move[0] if tmp_opponent_winning_move[0]!=(-1,-1) else opponent_winning_move[0]
                     for lv in range(1, 5):
                         player_winning_move[lv]+=tmp_player_winning_move[lv]
                         opponent_winning_move[lv]+=tmp_opponent_winning_move[lv]
