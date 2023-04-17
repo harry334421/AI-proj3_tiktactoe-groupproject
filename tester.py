@@ -93,15 +93,16 @@ class Tester( unittest.TestCase ):
         #XOXOO
         #XOXOX
         # Final move at (2,2)
-#        board_size = 5
-#        target = 3
-#        board=np.array([[0]*board_size for i in range(board_size)])
-#        board[0] = [1,  -1,  1,  0,  0]
-#        board[1] = [-1,  1,  -1,  1,  -1]
-#        board[2] = [-1,  1,  -1,  1,  -1]
-#        board[3] = [1,  -1,  1,  -1,  -1]
-#        board[4] = [1,  -1,  1,  -1,  1]
-#        self.assertEqual(-1,  strategy.check_winner(board, target, 2,  2))
+        board_size = 5
+        target = 3
+        board=np.array([[0]*board_size for i in range(board_size)])
+        board[0] = [1,  -1,  1,  0,  0]
+        board[1] = [-1,  1,  -1,  1,  -1]
+        board[2] = [-1,  1,  -1,  1,  -1]
+        board[3] = [1,  -1,  1,  -1,  -1]
+        board[4] = [1,  -1,  1,  -1,  1]
+        print(f"board={board}")
+        self.assertEqual(-1,  strategy.check_winner(board, target, 3,  4))
 
 
 

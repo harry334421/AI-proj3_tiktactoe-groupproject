@@ -9,12 +9,10 @@ import numpy as np
 def check_winner(board, target, row, col):
     rows, cols = board.shape
     diag1=col-row
-    pos1=row if diag1>=0 else col
     diag2=(cols-1-col)-row
-    pos2=row if diag2>0 else (cols-1-col)
 
     # Check rows
-    for j in range(max(0, row-target+1), cols - target + 1):
+    for j in range(0, cols - target + 1):
         window = board[row, j:j + target]
         if np.all(window == 1):
             return 1
@@ -22,8 +20,9 @@ def check_winner(board, target, row, col):
             return -1
 
     # Check columns
-    for i in range(max(0, col-target+1), rows - target + 1):
+    for i in range(0, rows - target + 1):
         window = board[i:i + target, col]
+        print(f"window={window}, col={board[:, col]}, ")
         if np.all(window == 1):
             return 1
         elif np.all(window == -1):
@@ -32,7 +31,7 @@ def check_winner(board, target, row, col):
     # Check diagonals (top-left to bottom-right)
     my_array=board.diagonal(diag1)
     if len(my_array)>=target:
-        for i in range(max(0, pos1-target+1), len(my_array) - target + 1):
+        for i in range(0, len(my_array) - target + 1):
             window = my_array[i:i+target]
             if np.all(window == 1):
             #if np.all(np.diag(window) == 1):
@@ -43,7 +42,7 @@ def check_winner(board, target, row, col):
     # Check diagonals (top-right to bottom-left)
     array=np.fliplr(board).diagonal(diag2)
     if len(array)>=target:
-        for i in range(max(0, pos2-target+1), len(array) - target + 1):
+        for i in range(0, len(array) - target + 1):
             window = array[i:i+target]
             if np.all(window == 1):
                 return 1
