@@ -131,11 +131,10 @@ def is_my_turn(game_id,  server_player1,  server_player2):
         print(f"I can make a move because Team {current_team_id} includes me (User {phc.my_user_id})")
         my_turn = True
     else:
-        print(f"current_team_id={current_team_id},  phc.teams={phc.teams}")
         print(f"I (User {phc.my_user_id}) need to wait until Team {current_team_id} makes a move")
         my_turn = False
 
-    return my_turn,  current_team_id, current_team_value,  last_move
+    return my_turn, current_team_id, current_team_value,  last_move
 
 
 #String to NP Array
@@ -249,21 +248,15 @@ def play_existing_game():
 
     while True:
         my_turn, current_team_id, current_team_value,  prev_move = is_my_turn(game_id,  server_player1,  server_player2)
-        if not my_turn:
-            delay = 10
-            print(f"Waiting for {delay} seconds")
-            time.sleep(delay)
-            # Query the server once again by restarting the loop
-            continue
 
         boardstr, _ = phc.get_game_board(game_id)
         board = string_to_board(boardstr)
 
         # If there are existing moves, make sure the game is still going
         if prev_move:
-            row = int(prev_move['moveX'])
-            col = int(prev_move['moveY'])
-            current_winner = strategy.check_winner(board, target, row,  col)
+            prev_row = int(prev_move['moveX'])
+            prev_col = int(prev_move['moveY'])
+            current_winner = strategy.check_winner(board, target, prev_row,  prev_col)
             if current_winner != 0:
                 # Game has been won already
                 print_winner(current_winner,  server_player1,  server_player2,  game_id)
@@ -272,6 +265,14 @@ def play_existing_game():
                 # Nobody won and nobody will
                 print_winner(current_winner,  server_player1,  server_player2,  game_id)
                 break
+
+        # Make sure it is our turn
+        if not my_turn:
+            delay = 10
+            print(f"Waiting for {delay} seconds")
+            time.sleep(delay)
+            # Query the server once again by restarting the loop
+            continue
 
         # Since the game hasn't finished, make a move
         timeout = 30
