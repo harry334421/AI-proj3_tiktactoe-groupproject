@@ -21,10 +21,10 @@ real_http_server = 'https://www.notexponential.com/aip2pgaming/api/index.php'
 
 class ProjectHttpClient:
     # Constructor
-    # my_id: Team ID of client (us)
-    # api_key: Required API key (necessary for using class server)
+    # header_file: Filename of JSON file containing API key and user identification
     # play_dummy_server: True if playing the dummy server, False if playing the real server
-    def __init__(self, header_file,  play_dummy_server):
+    # force_team: If not empty, force the client to identify as a single team
+    def __init__(self, header_file,  play_dummy_server,  force_team):
         self.my_games = {}
         self.header = json.load(open(header_file,'r'))
         self.my_user_id = int(self.header['userId'])
@@ -33,8 +33,14 @@ class ProjectHttpClient:
         else:
            self.server_url = real_http_server
 
-        # Getting teams from the server just to be sure we can make moves
-        self.teams = self.get_my_teams()
+        # Allowing multiple teams lets you play against yourself without
+        # needing to set up two command windows
+        if not force_team:
+            # Getting teams from the server just to be sure we can make moves
+            self.teams = self.get_my_teams()
+        else:
+            # Arguments were stored as a list of strings
+            self.teams = int(force_team[0])
 
     def get_my_teams(self):
         params = {}
