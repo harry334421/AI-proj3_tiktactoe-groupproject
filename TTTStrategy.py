@@ -22,7 +22,6 @@ def check_winner(board, target, row, col):
     # Check columns
     for i in range(0, rows - target + 1):
         window = board[i:i + target, col]
-        print(f"window={window}, col={board[:, col]}, ")
         if np.all(window == 1):
             return 1
         elif np.all(window == -1):

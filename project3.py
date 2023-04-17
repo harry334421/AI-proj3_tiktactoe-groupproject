@@ -121,7 +121,13 @@ def is_my_turn(game_id,  server_player1,  server_player2):
             current_team_value = 1
 
     # Am I allowed to play?
-    if current_team_id in phc.teams:
+    move_allowed = False
+    if type(phc.teams) is list and current_team_id in phc.teams:
+        move_allowed = True
+    elif type(phc.teams) is int and current_team_id == phc.teams:
+        move_allowed = True
+
+    if move_allowed:
         print(f"I can make a move because Team {current_team_id} includes me (User {phc.my_user_id})")
         my_turn = True
     else:
@@ -325,6 +331,9 @@ if __name__=='__main__':
     parser.add_argument('-d','--dummy',
                                         action='store_true',
                                         help="Play against the dummy server instead of the real one" )
+    parser.add_argument('-f','--forceteam',
+                                        nargs=1,
+                                        help="Limit client to using a single team's identity" )
     args = parser.parse_args()
 
     # 'key.json' contains the necessary authentication headers
@@ -336,7 +345,7 @@ if __name__=='__main__':
         exit(0)
 
     my_settings = json.load(open(SETTINGS_FILE, 'r'))
-    phc = ProjectHttpClient(KEY_FILE,  args.dummy)
+    phc = ProjectHttpClient(KEY_FILE,  args.dummy,  args.forceteam)
 
     while True:
         print_main_menu()
