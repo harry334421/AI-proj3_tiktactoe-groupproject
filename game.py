@@ -32,6 +32,7 @@ class Game:
 
 
     def make_move(self,  team,  row,  col):
+        #print(f"team={team} with symbol {self.team_symbol(team)}, row={row}, col={col}")
         team_is_player1 = team == self.player1
         if self.ttt.is_valid_move(team_is_player1,  row, col):
             self.ttt.make_move(team_is_player1, row, col)
@@ -92,9 +93,9 @@ class Game:
 
     def get_winner(self):
         winner_id = -1 # Invalid winner ID to start
-        if self.ttt.winner == 1:
+        if self.ttt.winner_value == 1:
             winner_id = self.player1
-        elif self.ttt.winner == -1:
+        elif self.ttt.winner_value == -1:
             winner_id = self.player2
 
         return winner_id
@@ -111,7 +112,7 @@ if __name__=='__main__':
     game = Game(team1=1, team2=3)
     print(game)
     print(f"It is {game.whose_turn()}'s turn")
-    game.make_move(team=1, row=1, col=1)
+    game.make_move(team=1, row=2, col=0)
     print(f"After a move was made,  it is now {game.whose_turn()}'s turn")
     print(game)
     print(f"The game map is now {game.get_map()}")

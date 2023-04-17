@@ -1,6 +1,6 @@
-# Project 3 Skeleton
+# CSCI 6511 Project 3
 
-This is an attempt to create a solid frame for the Tic-Tac-Toe game that allows it to interact with other engines.
+Project 3 creates a generalized Tic-Tac-Toe game interacts with other engines via a dummy server or via the class server.
 
 ## Packages required
 
@@ -8,17 +8,9 @@ This is an attempt to create a solid frame for the Tic-Tac-Toe game that allows 
 - json
 - urllib
 
-## Running Just the Game Logic
-
-The game logic is in a separate file (mostly for now). You can adjust the board size and have it play against itself
-
-```
-    python3 V9-MinMax+PatternSeeking-TTT-.py
-```
-
 ## Running
 
-First, copy your user id and API key into `token_TEMPLATE.txt` and save as `token.txt`.
+First, copy your user id and API key into `key-TEMPLATE.json` and save as `key.json`. Also, update your copy of `settings.json` to use your desired evaluator.
 
 ### Using the Class Server
 
@@ -47,10 +39,9 @@ Now, in the other window, start the client. Please note that you should add the 
     python3 project3.py -d
 ```
 
-## TODOs
+## Changelog
 
-- Integrate Eric's logic into separate strategy files
-- Get all commands working against the real server
+A [changelog](CHANGELOG.md) details some of the development process.
 
 ## Troubleshooting
 

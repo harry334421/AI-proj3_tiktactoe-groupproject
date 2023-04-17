@@ -11,6 +11,7 @@
 #
 # tictactoe.py - Generalized Tic-Tac-Toe game (board and operations)
 
+import TTTStrategy as strategy
 
 import numpy as np
 import random
@@ -25,7 +26,7 @@ class TicTacToe:
         self.player1_turn = True
         self.moves = []
         self.game_over = False
-        self.winner_id = -1 # Invalid to start
+        self.winner_value = 0 # Draw to start
 
 
     # Visual representation of the board
@@ -38,13 +39,12 @@ class TicTacToe:
         boardstr = str()
         for row in range(rows):
             for col in range(cols):
-                boardstr += " "
                 if self.board[row][col] == 1:
                     boardstr += "X"
                 elif self.board[row][col] == -1:
                     boardstr += "O"
                 else:
-                    boardstr += "_"
+                    boardstr += "-"
 
             boardstr += "\n"
 
@@ -60,46 +60,6 @@ class TicTacToe:
         else:
             board=[[ele_dict[ele] for ele in [*row]] for idx, row in enumerate(rows)]
         return board
-
-
-    # Does the board have a winner?
-    def check_winner(self,  board,  target):
-        rows = len(board)
-        cols = len(board[0])
-        # Check rows
-        for row in range(rows):
-            for col in range(cols - target + 1):
-                window = board[row][col:col + target]
-                if all(val == 1 for val in window):
-                    return 1
-                elif all(val == -1 for val in window):
-                    return -1
-        # Check columns
-        for row in range(rows - target + 1):
-            for col in range(cols):
-                window = [board[row + i][col] for i in range(target)]
-                if all(val == 1 for val in window):
-                    return 1
-                elif all(val == -1 for val in window):
-                    return -1
-        # Check diagonals (top-left to bottom-right)
-        for row in range(rows - target + 1):
-            for col in range(cols - target + 1):
-                window = [board[row + i][col + i] for i in range(target)]
-                if all(val == 1 for val in window):
-                    return 1
-                elif all(val == -1 for val in window):
-                    return -1
-        # Check diagonals (top-right to bottom-left)
-        for row in range(rows - target + 1):
-            for col in range(target - 1, cols):
-                window = [board[row + i][col - i] for i in range(target)]
-                if all(val == 1 for val in window):
-                    return 1
-                elif all(val == -1 for val in window):
-                    return -1
-        return 0
-
 
     # Have all the possible moves been made?
     def is_full(self, board):
@@ -132,10 +92,10 @@ class TicTacToe:
 
         self.board[row][col] = piece_value
         self.player1_turn = not self.player1_turn
-        winner_id = self.check_winner(self.board,  self.target)
-        if winner_id != 0:
+        winner_value = strategy.check_winner(self.board, self.target, row,  col)
+        if winner_value != 0:
             self.game_over = True
-            self.winner_id = winner_id
+            self.winner_value = winner_value
         return row, col
 
 
@@ -181,7 +141,7 @@ class TicTacToe:
             self.make_move(self.is_player1_turn(), row, col)
             self.print_board()
 
-            winner = self.check_winner(self.board, self.target)
+            winner = strategy.check_winner(self.board, self.target, row,  col)
             if winner != 0 or self.is_full(self.board):
                 break
 

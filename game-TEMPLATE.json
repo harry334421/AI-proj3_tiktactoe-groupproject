@@ -1,0 +1,26 @@
+{
+	"Game Option Comments": "Please choose between Options 1 and 2 below in the Game Option, leave the game id as -1 if create new game",
+	"Game Options": "1. Start a game \n 2. Join a Game", 
+	"Game Option": 1,
+	"Game ID": -1,
+	"Teams Comments": "Please put in team numbers below; Game creation process will take care of which team goes first in API",
+	"Teams":
+			{
+				"Team 1 Comments": "This is ALWAYS the team of TTT AGENT",
+				"Team 1": 1338,
+				"Team 2 Comments": "This is ALWAYS the team of OPPOPNENT",
+				"Team 2": 1361
+			},
+	"Game Parameters Comments": "Please fill in the game parameters regardless of whether you are starting a game or joining a game",
+	"Game Parameters":
+			{
+				"Board Size": 20,
+				"Target": 10,
+				"First Mover Comments": "Choose between first mover options below, this determines game create and load process",
+				"First Mover Options": "1. TTT Agent First \n 2. Opponent First",
+				"First Mover": 1
+			},
+	"Evaluator Comment": "Choose between evaluator 1 (base) and 4 (most complex)",
+	"Evaluator":4
+}
+

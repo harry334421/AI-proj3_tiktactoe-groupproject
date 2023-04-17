@@ -13,11 +13,10 @@
 
 
 from game import Game
-from strategy_random import StrategyRandom
 
-import ast
-from bottle import request,  route,  run
+from bottle import get, post,  request,  run
 import json
+import random
 import urllib.parse
 
 
@@ -26,12 +25,9 @@ game_id_counter = 2000
 move_id_counter = 0
 all_games = {}
 server_id = 9999
-strategy = StrategyRandom()
 
-# Note: the dummy server will handle a mismatch between the method and the
-# command but the real server won't...
-@route('<mypath:path>', method=['GET', 'POST'])
-def query_handler(mypath):
+@get('<mypath:path>')
+def get_query_handler(mypath):
     global query_counter
 
     query_counter = query_counter + 1
@@ -40,14 +36,10 @@ def query_handler(mypath):
     query = urllib.parse.parse_qs(request.query_string)
     query_type = query['type'][0]
 
-    if query_type == 'game':
-        resp = handle_create_game(query)
-    elif query_type == 'myGames' or query_type == 'myOpenGames':
+    if query_type == 'myGames' or query_type == 'myOpenGames':
         resp = handle_get_my_games(query)
     elif query_type == 'myTeams':
         resp = handle_get_my_teams(query)
-    elif query_type == 'move':
-        resp = handle_move(query)
     elif query_type == 'moves':
         resp = handle_request_moves(query)
     elif query_type == 'boardString':
@@ -63,32 +55,74 @@ def query_handler(mypath):
     return json.dumps(resp)
 
 
+# Handle POST calls
+@post('<mypath:path>')
+def post_handler(mypath):
+    global query_counter
+
+    query_counter = query_counter + 1
+    print(f"Handling query {query_counter}")
+
+    query_type = request.forms['type']
+    resp = {}
+    resp["code"] = "FAIL"
+    post_args = {}
+    print(f"query_type={query_type}")
+
+    if query_type == 'game':
+        # Pull all the parameters out
+        post_args['type'] = request.forms['type']
+        post_args['teamId1'] = request.forms['teamId1']
+        post_args['teamId2'] = request.forms['teamId2']
+        post_args['gameType'] = request.forms['gameType']
+        if 'boardSize' in request.forms:
+            post_args['boardSize'] = request.forms['boardSize']
+        if 'target' in request.forms:
+            post_args['target'] = request.forms['target']
+
+        resp = handle_create_game(post_args)
+
+    elif query_type == 'move':
+        # Pull all the parameters out
+        post_args['type'] = request.forms['type']
+        post_args['gameId'] = request.forms['gameId']
+        post_args['teamId'] = request.forms['teamId']
+        post_args['move'] = request.forms['move']
+
+        resp = handle_move(post_args)
+
+    else:
+        resp = {}
+        resp["code"] = "FAIL"
+        resp["message"] = f"This server does not handle the '{query_type}' command"
+
+    return json.dumps(resp)
+
+
 def handle_create_game(query):
     global game_id_counter
-    query_type = query['type'][0]
+    query_type = query['type']
 
     # Check mandatory parameters
     if 'teamId1' in query and \
         'teamId2' in query and \
-        query['gameType'][0] == 'TTT':
+        query['gameType'] == 'TTT':
             # Check for optional parameters
             board_size = 20 # Default
             if 'boardSize' in query:
-                board_size = int(query['boardSize'][0])
+                board_size = int(query['boardSize'])
             target = 6 # Default
             if 'target' in query:
-                target = int(query['target'][0])
-            team1 = int(query['teamId1'][0])
-            team2 = int(query['teamId2'][0])
+                target = int(query['target'])
+            team1 = int(query['teamId1'])
+            team2 = int(query['teamId2'])
             game_id = game_id_counter
 
             new_game = Game(team1, team2, board_size, target, game_id)
             all_games[game_id_counter] = new_game
 
-            # Make the initial move if it is the server's turn
-            if server_id == int(new_game.player1):
-                row, col = strategy.select_next_move_coords(new_game.ttt, server_id==new_game.player1)
-                new_game.make_move(server_id, row, col)
+            print(f"Player 1 (Team {team1}) has symbol '{new_game.team_symbol(team1)}'")
+            print(f"Player 2 (Team {team2}) has symbol '{new_game.team_symbol(team2)}'")
 
             resp = {}
             resp['code'] = "OK"
@@ -99,6 +133,7 @@ def handle_create_game(query):
         resp = {}
         resp["code"] = "FAIL"
         resp["message"] = f"Invalid '{query_type}' command: query={query}"
+
     return resp
 
 
@@ -135,7 +170,7 @@ def handle_get_my_teams(query):
 
 def handle_move(query):
     global move_id_counter
-    query_type = query['type'][0]
+    query_type = query['type']
 
     # Assuming failure by default
     # - Does the game exist?
@@ -152,12 +187,17 @@ def handle_move(query):
             resp["message"] = f"Invalid '{query_type}' command: query={query}"
             return resp
 
-    game_id = int(query['gameId'][0])
-    team_id = int(query['teamId'][0])
+    game_id = int(query['gameId'])
+    team_id = int(query['teamId'])
 
-    move_list = ast.literal_eval(query['move'][0])
-    row = move_list[1]
-    col = move_list[0]
+    print(f"query move={query['move']}")
+    move_list = query['move'].split(',')
+    # Going from (x,y) to (row, column) ordering
+    move_x = int(move_list[1])
+    move_y = int(move_list[0])
+
+    row = move_y
+    col = move_x
     if not game_id in all_games.keys():
         resp["message"] = f"Game '{game_id}' does not exist: query={query}"
         return resp
@@ -176,7 +216,7 @@ def handle_move(query):
         return resp
 
     if current_game.is_game_over():
-        resp["message"] = f"Game already over: winner={current_game.winner()},  query={query}"
+        resp["message"] = f"Game already over: winner={current_game.get_winner()},  query={query}"
         return resp
 
     # Passed all the tests, can finally make the move
@@ -185,15 +225,6 @@ def handle_move(query):
     resp['code'] = "OK"
     resp['moveId'] = move_id_counter
     move_id_counter += 1
-
-    if not current_game.is_game_over():
-        # TODO - Place this elsewhere so a delay can be introduced
-        if team_id == int(current_game.player1):
-            server_id = int(current_game.player2)
-        else:
-            server_id = int(current_game.player1)
-        row, col = strategy.select_next_move_coords(current_game.ttt,  server_id==current_game.player1)
-        current_game.make_move(server_id, row, col)
 
     return resp
 
@@ -214,6 +245,7 @@ def handle_request_board_string(query):
         current_game = all_games[game_id]
         resp['code'] = "OK"
         resp['output'] = current_game.get_board()
+        resp['target'] = current_game.target_size
 
     return resp
 
@@ -234,6 +266,7 @@ def handle_request_board_map(query):
         current_game = all_games[game_id]
         resp['code'] = "OK"
         resp['output'] = current_game.get_map()
+        resp['target'] = current_game.target_size
 
     return resp
 
@@ -264,6 +297,19 @@ def handle_request_moves(query):
     resp['moves'] = wanted_moves
 
     return resp
+
+# Quickly find an usused space (for testing mostly)
+def select_unused_coords(board):
+    board_size = board.shape[0]
+    row = 0
+    col = 0
+    while True:
+        row = random.randrange(board_size)
+        col = random.randrange(board_size)
+        if board[row][col] == 0:
+            break
+
+    return row, col
 
 
 if __name__ == "__main__":

@@ -16,12 +16,6 @@ import json
 import requests
 import urllib.parse
 
-
-# Using the default requests user agent caused errors with the class server:
-# 'Not Acceptable! An appropriate representation of the requested resource could
-# not be found on this server.'
-fake_ua = 'Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101 Firefox/102.0'
-
 dummy_http_server = 'http://127.0.0.1:8080'
 real_http_server = 'https://www.notexponential.com/aip2pgaming/api/index.php'
 
@@ -30,11 +24,10 @@ class ProjectHttpClient:
     # my_id: Team ID of client (us)
     # api_key: Required API key (necessary for using class server)
     # play_dummy_server: True if playing the dummy server, False if playing the real server
-    def __init__(self, my_id,  api_key,  play_dummy_server):
+    def __init__(self, header_file,  play_dummy_server):
         self.my_games = {}
-        self.my_id = my_id
-        self.api_key = api_key
-        self.ua = fake_ua
+        self.header = json.load(open(header_file,'r'))
+        self.my_user_id = int(self.header['userId'])
         if play_dummy_server:
             self.server_url = dummy_http_server
         else:
@@ -51,14 +44,8 @@ class ProjectHttpClient:
         url = f"{self.server_url}?{query}"
 
         payload={}
-        headers = {
-            'x-api-key': self.api_key,
-            'userid': self.my_id,
-            'User-Agent': self.ua
-        }
-
         my_teams = []
-        raw_response = requests.request("GET", url, headers=headers, data=payload)
+        raw_response = requests.get(url, headers=self.header, data=payload)
         try:
             response = json.loads(raw_response.text)
         except:
@@ -75,25 +62,15 @@ class ProjectHttpClient:
 
 
     def create_new_game(self, board_size, target_size, team1_id, team2_id):
-        params = {}
-        params['type'] = 'game'
-        params['gameType'] = 'TTT'
-        params['boardSize'] = board_size
-        params['target'] = target_size
-        params['teamId1'] = team1_id
-        params['teamId2'] = team2_id
+        payload = {}
+        payload['type'] = 'game'
+        payload['gameType'] = 'TTT'
+        payload['boardSize'] = board_size
+        payload['target'] = target_size
+        payload['teamId1'] = team1_id
+        payload['teamId2'] = team2_id
 
-        query = urllib.parse.urlencode(params)
-        url = f"{self.server_url}?{query}"
-
-        payload={}
-        headers = {
-            'x-api-key': self.api_key,
-            'userid': self.my_id,
-            'User-Agent': self.ua
-        }
-
-        raw_response = requests.request("POST", url, headers=headers, data=payload)
+        raw_response = requests.post(self.server_url, headers=self.header, data=payload,  files=[])
         try:
             response = json.loads(raw_response.text)
         except:
@@ -103,8 +80,10 @@ class ProjectHttpClient:
         if ( response['code'] == 'OK'):
             print(f"Created game {response['gameId']} successfully")
         else:
-            print(f"Failure in creating game, message={response['message']}")
-
+            if 'message' in response:
+                print(f"Failure in creating game, message={response['message']}")
+            else:
+                print("Failure with no message given")
 
     def get_my_games(self):
         params = {}
@@ -114,14 +93,8 @@ class ProjectHttpClient:
         url = f"{self.server_url}?{query}"
 
         payload={}
-        headers = {
-            'x-api-key': self.api_key,
-            'userid': self.my_id,
-            'User-Agent': self.ua
-        }
-
         my_games = []
-        raw_response = requests.request("GET", url, headers=headers, data=payload)
+        raw_response = requests.get(url, headers=self.header, data=payload)
         try:
             response = json.loads(raw_response.text)
         except:
@@ -131,7 +104,10 @@ class ProjectHttpClient:
         if ( response['code'] == 'OK'):
             my_games = response['myGames']
         else:
-            print(f"Failure in creating game,  message={response['message']}")
+            if 'message' in response:
+                print(f"Failure in getting games, message={response['message']}")
+            else:
+                print("Failure with no message given")
 
         return my_games
 
@@ -145,14 +121,9 @@ class ProjectHttpClient:
         url = f"{self.server_url}?{query}"
 
         payload={}
-        headers = {
-            'x-api-key': self.api_key,
-            'userid': self.my_id,
-            'User-Agent': self.ua
-        }
-
         board_map = []
-        raw_response = requests.request("GET", url, headers=headers, data=payload)
+        target = -1
+        raw_response = requests.get(url, headers=self.header, data=payload)
         try:
             response = json.loads(raw_response.text)
         except:
@@ -161,10 +132,14 @@ class ProjectHttpClient:
 
         if ( response['code'] == 'OK'):
             board_map = response['output']
+            target = int(response['target'])
         else:
-            print(f"Failure in getting board for {game_id},  message={response['message']}")
+            if 'message' in response:
+                print(f"Failure in getting map for {game_id}, message={response['message']}")
+            else:
+                print(f"Failure with no message given for getting map for {game_id}")
 
-        return board_map
+        return board_map, target
 
     def get_game_board(self, game_id):
         params = {}
@@ -175,14 +150,10 @@ class ProjectHttpClient:
         url = f"{self.server_url}?{query}"
 
         payload={}
-        headers = {
-            'x-api-key': self.api_key,
-            'userid': self.my_id,
-            'User-Agent': self.ua
-        }
 
         board = ""
-        raw_response = requests.request("GET", url, headers=headers, data=payload)
+        target = -1
+        raw_response = requests.get(url, headers=self.header, data=payload)
         try:
             response = json.loads(raw_response.text)
         except:
@@ -191,30 +162,25 @@ class ProjectHttpClient:
 
         if ( response['code'] == 'OK'):
             board = response['output']
+            target = int(response['target'])
         else:
-            print(f"Failure in getting board for {game_id},  message={response['message']}")
+            if 'message' in response:
+                print(f"Failure in getting board for {game_id}, message={response['message']}")
+            else:
+                print(f"Failure with no message given for getting board for {game_id}")
 
-        return board
+        return board, target
 
 
     def make_move(self, game_id, team_id, row, col):
-        params = {}
-        params['type'] = 'move'
-        params['gameId'] = game_id
-        params['move'] = f"{col},{row}" # Column is x coordinate and row is y coordinate
-        params['teamId'] = team_id
+        payload = {}
+        payload['type'] = 'move'
+        payload['gameId'] = game_id
+        # Server marks moves as (x,y) but acts backwards if (col,row) given
+        payload['move'] = f"{row},{col}"
+        payload['teamId'] = team_id
 
-        query = urllib.parse.urlencode(params)
-        url = f"{self.server_url}?{query}"
-
-        payload={}
-        headers = {
-            'x-api-key': self.api_key,
-            'userid': self.my_id,
-            'User-Agent': self.ua
-        }
-
-        raw_response = requests.request("POST", url, headers=headers, data=payload)
+        raw_response = requests.post(self.server_url, headers=self.header, data=payload, files=[])
         try:
             response = json.loads(raw_response.text)
         except:
@@ -222,10 +188,13 @@ class ProjectHttpClient:
             return
 
         if not response['code'] == 'OK':
-            print(f"Failure in making move, message={response['message']}")
+            if 'message' in response:
+                print(f"Failure in making move, message={response['message']}")
+            else:
+                print("Failure in making move with no message given")
 
 
-    def get_moves(self, game_id, n_moves):
+    def get_moves(self, game_id, n_moves,  quiet=False):
         params = {}
         params['type'] = 'moves'
         params['gameId'] = game_id
@@ -235,26 +204,23 @@ class ProjectHttpClient:
         url = f"{self.server_url}?{query}"
 
         payload={}
-        headers = {
-            'x-api-key': self.api_key,
-            'userid': self.my_id,
-            'User-Agent': self.ua
-        }
-
         moves = [] # Empty for error checking
-
-        raw_response = requests.request("GET", url, headers=headers, data=payload)
+        raw_response = requests.get(url, headers=self.header, data=payload)
         try:
             response = json.loads(raw_response.text)
         except:
             print(f"Server game non-JSON response: {raw_response.text}")
             return moves
-        print(f"raw_response.text={raw_response.text}")
 
         if ( response['code'] == 'OK'):
-            moves = response['moves']
+            if 'moves' in response:
+                moves = response['moves']
         else:
-            print(f"Failure in making move, message={response['message']}")
+            if not quiet:
+                if 'message' in response:
+                    print(f"Failure in getting moves for {game_id}, message={response['message']}")
+                else:
+                    print(f"Failure with no message given for getting moves for {game_id}")
 
         return moves
 

@@ -1,4 +1,0 @@
-# Put user-id, API key as shown
-# Example:
-# 5555, abcdefghijk123
-<user id>, <api_key>
