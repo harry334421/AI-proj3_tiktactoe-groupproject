@@ -139,7 +139,7 @@ def is_my_turn(game_id,  server_player1,  server_player2):
 
 #String to NP Array
 def string_to_board(boardstr):
-    ele_dict={"X":1, "O":-1, "_":0, "-":0}
+    ele_dict={"X":-1, "O":1, "_":0, "-":0}
     rows=boardstr.split("\n")
     rows.remove("")
     if " " in rows[0]:
@@ -251,7 +251,7 @@ def play_existing_game():
 
         boardstr, _ = phc.get_game_board(game_id)
         board = string_to_board(boardstr)
-
+        
         # If there are existing moves, make sure the game is still going
         if prev_move:
             prev_row = int(prev_move['moveX'])
@@ -273,9 +273,13 @@ def play_existing_game():
             time.sleep(delay)
             # Query the server once again by restarting the loop
             continue
-
+        
+        #Print the Board after opponent move
+        print("Current Board:")
+        print_board(board)
+        
         # Since the game hasn't finished, make a move
-        timeout = 30
+        timeout = 29
         is_maximizing = (current_team_id == server_player1)
         evaluator = choose_evaluator(current_team_id)
         last_moves = phc.get_moves(game_id,  2) # make_move requires last two moves
@@ -284,6 +288,7 @@ def play_existing_game():
             coords, _ = mm.make_move(board, is_maximizing, target, last_moves, evaluator, timeout,  min_depth)
             row = coords[0]
             col = coords[1]
+            board[row][col]=1 if is_maximizing else -1
             #row, col = select_unused_coords(board)
             print(f"About to try row={row}, col={col}")
             phc.make_move(game_id,  current_team_id, row,  col)
@@ -293,7 +298,11 @@ def play_existing_game():
             print("-"*60)
             traceback.print_exc(file=sys.stdout)
             print("-"*60)
-
+        
+        #Print the Board after my move 
+        print("Board after my move:")
+        print_board(board)
+        
         # Give the server some time to react
         time.sleep(5)
 

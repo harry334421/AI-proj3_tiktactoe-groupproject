@@ -5,7 +5,7 @@ import random
 from multiprocessing import Manager, Pool, cpu_count
 import TTTStrategy as strategy
 import time
-
+import numpy as np 
 '''
 Functions
 '''
@@ -83,7 +83,6 @@ def make_move(board, is_maximizing, target, last_moves, evaluator, timeout, min_
     Back to Pattern Checking while the async processes is starting
     '''
     #Check Winning and Blocking Moves
-
     if len(possible_moves)<=len(board)**2-2*target+1:
         res_counter=0
         max_count=len(possible_moves)
@@ -106,8 +105,8 @@ def make_move(board, is_maximizing, target, last_moves, evaluator, timeout, min_
                     pool.join()
                     return tmp_player_winning_move[0], None
                 else:
-                    player_winning_move[0]=tmp_player_winning_move[0]
-                    opponent_winning_move[0]=tmp_opponent_winning_move[0]
+                    player_winning_move[0]=tmp_player_winning_move[0] if tmp_player_winning_move[0]!=(-1,-1) else player_winning_move[0]
+                    opponent_winning_move[0]=tmp_opponent_winning_move[0] if tmp_opponent_winning_move[0]!=(-1,-1) else opponent_winning_move[0]
                     for lv in range(1, 5):
                         player_winning_move[lv]+=tmp_player_winning_move[lv]
                         opponent_winning_move[lv]+=tmp_opponent_winning_move[lv]
@@ -127,21 +126,7 @@ def make_move(board, is_maximizing, target, last_moves, evaluator, timeout, min_
         pool.terminate()
         pool.join()
         return opponent_winning_move[0], None
-    for idx in range(1,5):
-        if player_winning_move[idx]!=[]:
-            delta=time.time() - start_time
-            print(f"Move time: {'{:.2f}s'.format(delta)}")
-            print(f"Intermediate Winning Move @ Scenario{idx}.")
-            pool.terminate()
-            pool.join()
-            return random.choice(player_winning_move[idx]), None
-        elif opponent_winning_move[idx]!=[]:
-            delta=time.time() - start_time
-            print(f"Move time: {'{:.2f}s'.format(delta)}")
-            print(f"Intermediate Blocking Move @ Scenario {idx}.")
-            pool.terminate()
-            pool.join()
-            return random.choice(opponent_winning_move[idx]), None
+    # Additional Winning Moves are moved down after minmax 
 
     #Start the IDS Process
     #MinMax with Iterative Deepening
@@ -210,20 +195,57 @@ def make_move(board, is_maximizing, target, last_moves, evaluator, timeout, min_
         print('Beta cutoff')
         delta=time.time() - start_time
         print(f"Move time: {'{:.2f}s'.format(delta)}")
-        pool.terminate()
-        pool.join()
+        try:
+            pool.terminate()
+            pool.join()
+        except:
+            pass
         return random.choice(best_move[beta_cutoff]), None
-
+    
     #Check Results
     res_depth=0
     for idx, key in enumerate(sorted(list(depth_res_count.keys()), reverse=True)):
         if depth_res_count[key]==len(possible_moves):
             res_depth=key
             break
-
+    
+    for idx in range(1,5):
+        if player_winning_move[idx]!=[]:
+            #Get Score Maps
+            scores=np.array(score_map[res_depth])
+            subset=scores[[cell[0] for cell in player_winning_move[idx]], [cell[1] for cell in player_winning_move[idx]]]
+            target_idx = np.argmax(subset) if is_maximizing==True else np.argmin(subset)
+            target_move = player_winning_move[idx][target_idx]
+            #Calculate Time
+            delta=time.time() - start_time
+            print(f"Move time: {'{:.2f}s'.format(delta)}")
+            print(f"Intermediate Winning Move @ Scenario{idx}.")
+            try:
+                pool.terminate()
+                pool.join()
+            except:
+                pass
+            return target_move, None
+        elif opponent_winning_move[idx]!=[]:
+            #Get Score Maps
+            scores=np.array(score_map[res_depth])
+            subset=scores[[cell[0] for cell in opponent_winning_move[idx]], [cell[1] for cell in opponent_winning_move[idx]]]
+            target_idx = np.argmax(subset) if is_maximizing==True else np.argmin(subset)
+            target_move = opponent_winning_move[idx][target_idx]
+            #Calculate Time
+            delta=time.time() - start_time
+            print(f"Move time: {'{:.2f}s'.format(delta)}")
+            print(f"Intermediate Blocking Move @ Scenario {idx}.")
+            try:
+                pool.terminate()
+                pool.join()
+            except:
+                pass
+            return target_move, None
+    
     delta=time.time() - start_time
     print(f"Move time: {'{:.2f}s'.format(delta)}")
-
+    
     print(f"Best move @ depth {res_depth}")
     '''
     print(f'Best Score: {alpha[res_depth] if is_maximizing else beta[res_depth]}')
