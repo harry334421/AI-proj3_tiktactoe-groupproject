@@ -24,8 +24,8 @@ def move_worker(input_queue, result_queue):
                 board[i][j] = 0
                 result_queue.put((func_type, (i, j, max_depth, score)))
             elif func_type==2:
-                board, target, is_maximizing, i, j, start_time = data
-                player_winning_move, opponent_winning_move = strategy.pattern_check(board, target, is_maximizing, i, j,  start_time)
+                board, target, is_maximizing, i, j = data
+                player_winning_move, opponent_winning_move = strategy.pattern_check(board, target, is_maximizing, i, j)
                 result_queue.put((func_type, (player_winning_move, opponent_winning_move)))
         except Exception as e:
             print(f"Exception: {e}")
@@ -94,7 +94,7 @@ def make_move(board, is_maximizing, target, last_moves, evaluator, timeout, min_
                 break
             try:
                 if pidx<max_count:
-                    iqueue.put_nowait((2, (board, target, is_maximizing, ranked_moves[pidx][0], ranked_moves[pidx][1], start_time)))
+                    iqueue.put_nowait((2, (board, target, is_maximizing, ranked_moves[pidx][0], ranked_moves[pidx][1])))
                     pidx+=1
             except:
                 pass

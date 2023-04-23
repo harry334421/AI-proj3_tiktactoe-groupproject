@@ -245,7 +245,10 @@ def play_existing_game():
         if current_winner != 0:
             print_winner(current_winner, server_player1,  server_player2,  game_id)
             return
-
+    
+    #Recommended Search Depth for Powerful CPUs, updated by make_move function's return 
+    recommended_depth = 0
+    
     while True:
         my_turn, current_team_id, current_team_value,  prev_move = is_my_turn(game_id,  server_player1,  server_player2)
 
@@ -283,9 +286,9 @@ def play_existing_game():
         is_maximizing = (current_team_id == server_player1)
         evaluator = choose_evaluator(current_team_id)
         last_moves = phc.get_moves(game_id,  2) # make_move requires last two moves
-        min_depth=max(min(1, len(strategy.get_possible_moves(board))-1),0)
+        min_depth=0 if cpu_count<8 else recommended_depth
         try:
-            coords, _ = mm.make_move(board, is_maximizing, target, last_moves, evaluator, timeout,  min_depth)
+            coords, recommended_depth = mm.make_move(board, is_maximizing, target, last_moves, evaluator, timeout,  min_depth)
             row = coords[0]
             col = coords[1]
             board[row][col]=1 if is_maximizing else -1

@@ -85,7 +85,7 @@ def rank_moves(possible_moves, last_moves):
     return sorted_moves
 
 #Pattern Checking Driver
-def pattern_check(board, target,is_maximizing, i, j,  start_time):
+def pattern_check(board, target,is_maximizing, i, j):
     player_winning_move = {0: (-1,-1), 1:[], 2:[], 3:[], 4:[]}
     opponent_winning_move = {0: (-1,-1), 1:[], 2:[], 3:[], 4:[]}
     board[i][j] = 1 if is_maximizing else -1
@@ -128,299 +128,162 @@ def intermediate_winning_pattern(board, target, row, col, player):
     player=1 if player else -1
     #results holder
     intermediate_winning_move={1:[], 2:[], 3:[], 4:[]}
-
+    
     #One T-1 Sequence Two-Way Unblocked
-    count_2w_tm1, count_2w_tm1_seq=find_2way_unblocked_sequences(board, target, target-1, player, max_gap=0)
-    for seq in count_2w_tm1_seq:
+    count_tm1_g0_seq=find_unblocked_sequences(board, target, target-1, player, max_gap=0)
+    for seq in count_tm1_g0_seq[2]:
         if (row, col) in seq:
             intermediate_winning_move[1].append((row,col))
             break
-
+    
     #Two T-1 Sequence One-Way Unblocked
-    count_1w_tm1, count_1w_tm1_seq=find_1way_unblocked_sequences(board, target, target-1, player)
+    count_tm1_g1_seq=find_unblocked_sequences(board, target, target-1, player)
     counter=0
-    for seq in count_1w_tm1_seq:
+    for seq in count_tm1_g1_seq[1]:
         if (row, col) in seq: counter+=1
         if counter==2:
             intermediate_winning_move[1].append((row,col))
-
+            break
+    
     #One T-1 Sequence One-Way Blocked and one T-2 Sequence Two-way Unblocked
-    count_2w_tm2, count_2w_tm2_seq=find_1way_unblocked_sequences(board, target, target-1, player)
-    for seq1 in count_1w_tm1_seq:
+    count_tm2_g1_seq=find_unblocked_sequences(board, target, target-1, player)
+    for seq1 in count_tm1_g1_seq[1]:
         if (row, col) in seq:
-            for seq2 in count_2w_tm2_seq:
+            for seq2 in count_tm2_g1_seq[2]:
                 if (row, col) in seq2:
                     intermediate_winning_move[2].append((row,col))
-
+    
     #Two T-2 Sequence Two-Way Unblocked
     counter=0
-    for seq in count_2w_tm2_seq:
+    for seq in count_tm2_g1_seq[2]:
         if (row, col) in seq: counter+=1
         if counter==2:
             intermediate_winning_move[3].append((row,col))
-
+    
     #One T-2 Sequence Two-Way Unblocked and One T-2 Sequence One-Way Unblocked
-    count_1w_tm2, count_1w_tm2_seq=find_1way_unblocked_sequences(board, target, target-2, player)
-    for seq in count_2w_tm2_seq:
+    for seq in count_tm2_g1_seq[2]:
         if (row, col) in seq:
-            for seq2 in count_1w_tm2_seq:
+            for seq2 in count_tm2_g1_seq[1]:
                     if (row, col) in seq2:
                         intermediate_winning_move[4].append((row,col))
-
     return intermediate_winning_move
 
 ##Ancillary Function to Check Unblocked Sequences
-def find_2way_unblocked_sequences(board, target, required_length, player, max_gap=1):
-    # Window Length
-    window_lengths = []
-    for gap in range(max_gap + 1):
-        window_lengths.append(min(max(required_length + gap + 2, target), board.shape[1]))
-    window_lengths = list(set(window_lengths))
+def find_unblocked_sequences(board, target, required_length, player, max_gap=1):
     # Player
-    unblocked_count = 0
-    unblocked_list = []
+    unblocked_list = {1:[], 2:[]}
+    tmp_list={}
     # Check Row
     for row in range(board.shape[0]):
         array = board[row]
-        for window_length in window_lengths:
-            for idx1 in range(board.shape[1] - window_length + 1):
-                window = array[idx1:idx1 + window_length]
-                if all(val != -player for val in window) and sum(val == player for val in window) == required_length:
-                    min_idx = list(window).index(player)
-                    max_idx = len(window) - 1 - list(window)[::-1].index(player)
-                    gaps = max_idx - min_idx + 1 - required_length
-                    if gaps <= 1 and min_idx != 0 and max_idx != len(window) - 1:
-                        seq = []
-                        for idx2, role in enumerate(window):
-                            if role == player:
-                                seq.append((row, idx1 + idx2))
-                        if seq not in unblocked_list:
-                            unblocked_list.append(seq)
-                            unblocked_count += 1
-
+        for idx1 in range(board.shape[1] - target + 1):
+            window = array[idx1:idx1 + target]
+            if all(val != -player for val in window) and sum(val == player for val in window) == required_length:
+                min_idx = list(window).index(player)
+                max_idx = len(window) - 1 - list(window)[::-1].index(player)
+                gaps = max_idx - min_idx + 1 - required_length
+                if gaps <= max_gap:
+                    seq = []
+                    pos=[]
+                    for idx2, role in enumerate(window):
+                        if role == player:
+                            seq.append((row, idx1 + idx2))
+                            pos.append(idx1+idx2)
+                    seq = tuple(seq)
+                    if seq not in tmp_list:
+                        tmp_list[seq]={'min':idx1, 'max':idx1+target-1, 'pos': pos}
+                    else:
+                        tmp_list[seq]['max']=idx1+target-1
+    
     #Check Column
     for col in range(board.shape[1]):
         array = board.transpose()[col]
-        for window_length in window_lengths:
-            for idx1 in range(board.shape[0] - window_length + 1):
-                window = array[idx1:idx1 + window_length]
-                if all(val != -player for val in window) and sum(val == player for val in window) == required_length:
-                    min_idx = list(window).index(player)
-                    max_idx = len(window) - 1 - list(window)[::-1].index(player)
-                    gaps = max_idx - min_idx + 1 - required_length
-                    if gaps <= 1 and min_idx != 0 and max_idx != len(window) - 1:
-                        seq = []
-                        for idx2, role in enumerate(window):
-                            if role == player:
-                                seq.append((idx1 + idx2, col))
-                        if seq not in unblocked_list:
-                            unblocked_list.append(seq)
-                            unblocked_count += 1
-
-    #Diagonal
-    for idx0 in range(board.shape[0]):
-        array = np.diagonal(board, offset=idx0)
-        for window_length in window_lengths:
-            if len(array) >= window_length:
-                for idx1 in range(len(array) - window_length + 1):
-                    window = array[idx1:idx1 + window_length]
-                    if all(val != -player for val in window) and sum(val == player for val in window) == required_length:
-                        min_idx = list(window).index(player)
-                        max_idx = len(window) - 1 - list(window)[::-1].index(player)
-                        gaps = max_idx - min_idx + 1 - required_length
-                        if gaps <= 1 and min_idx != 0 and max_idx != len(window) - 1:
-                            seq = []
-                            for idx2, role in enumerate(window):
-                                if role == player and idx0 >= 0:
-                                    seq.append((idx0 + idx1 + idx2, idx1 + idx2))
-                                elif role == player and idx0 < 0:
-                                    seq.append((idx1 + idx2, idx0 + idx1 + idx2))
-                            if seq not in unblocked_list:
-                                unblocked_list.append(seq)
-                                unblocked_count += 1
-
-    #Anti-Diagonal
-    for idx0 in range(board.shape[0]):
-        for dr in [-1,1]:
-            array = np.fliplr(board).diagonal(idx0*dr)
-            for window_length in window_lengths:
-                if len(array) >= window_length:
-                    for idx1 in range(len(array)-window_length+1):
-                        window = array[idx1:idx1+window_length]
-                        if all(val != -player for val in window) and sum(val == player for val in window) == required_length:
-                            min_idx = list(window).index(player)
-                            max_idx = len(window) - 1 - required_length
-                            gaps = max_idx - min_idx + 1 - sum(window)
-                            if gaps <= 1 and min_idx != 0 and max_idx != len(window)-1:
-                                seq = []
-                                for idx2, role in enumerate(window):
-                                    if role == player and dr == 1:
-                                        seq.append((board.shape[0] - 1 - (idx1+idx2), idx0+idx1+idx2))
-                                    elif role == player and dr == -1:
-                                        seq.append((board.shape[0] - 1 - (idx0+idx1+idx2), idx1+idx2))
-                                if seq not in unblocked_list:
-                                    unblocked_list.append(seq)
-                                    unblocked_count += 1
-    return unblocked_count, unblocked_list
-
-def find_1way_unblocked_sequences(board, target, required_length, player, max_gap=1):
-
-    window_lengths=[]
-    for gap in range(max_gap+1):
-        window_lengths.append(min(max(required_length+gap+2, target),board.shape[1]))
-    window_lengths=list(set(window_lengths))
-    #Player
-    unblocked_count=0
-    unblocked_list=[]
-    #Check Row
-    for row in range(board.shape[0]):
-        #print(f"Row: {row}")
-        array=board[row]
-        for window_length in window_lengths:
-            for idx1 in range(len(array)-window_length+2):
-                window=array[idx1:idx1+window_length]
-                #print(window)
-                if (sum(val == -player for val in window)==1 and (window[0]==-player or window[-1]==-player)) and sum(val == player for val in window)==required_length:
-                    flag_idx=list(window).index(-player)
-                    min_idx=list(window).index(player)
-                    max_idx=len(window) -1 - list(window)[::-1].index(player)
-                    gaps=max_idx-min_idx+1-required_length
-                    if gaps<=1 and (min_idx==flag_idx+1 or max_idx==flag_idx-1):
-                        seq=[]
-                        for idx2, role in enumerate(window):
-                            if role==player:
-                                seq.append((row, idx1+idx2))
-                        if seq not in unblocked_list:
-                            unblocked_list.append(seq)
-                            unblocked_count+=1
-                elif (sum(val == -player for val in window)==0 and (idx1==0 or idx1+window_length==board.shape[1])) and sum(val == player for val in window)==required_length:
-                    min_idx=list(window).index(player)
-                    max_idx=len(window) -1 - list(window)[::-1].index(player)
-                    gaps=max_idx-min_idx+1-required_length
-                    if gaps<=1 and (min_idx==0 or max_idx==len(window)-1):
-                        seq=[]
-                        for idx2, role in enumerate(window):
-                            if role==player:
-                                seq.append((row, idx1+idx2))
-                        if seq not in unblocked_list:
-                            unblocked_list.append(seq)
-                            unblocked_count+=1
-
-    #Check Column
-    for col in range(board.shape[1]):
-        array = board[:, col]
-        for window_length in window_lengths:
-            for idx1 in range(len(array)-window_length+2):
-                window = array[idx1:idx1+window_length]
-                if (np.count_nonzero(window == -player) == 1 and (window[0] == -player or window[-1] == -player)) and np.count_nonzero(window == player) == required_length:
-                    flag_idx = np.where(window == -player)[0][0]
-                    min_idx = np.where(window == player)[0][0]
-                    max_idx = len(window) - 1 - np.where(window[::-1] == player)[0][0]
-                    gaps = max_idx - min_idx + 1 - required_length
-                    if gaps <= 1 and (min_idx == flag_idx+1 or max_idx == flag_idx-1):
-                        seq = []
-                        for idx2, role in enumerate(window):
-                            if role == player:
-                                seq.append((idx1+idx2, col))
-                        if seq not in unblocked_list:
-                            unblocked_list.append(seq)
-                            unblocked_count += 1
-                elif (np.count_nonzero(window == -player) == 0 and (idx1 == 0 or idx1+window_length == len(board))) and np.count_nonzero(window == player) == required_length:
-                    min_idx = np.where(window == player)[0][0]
-                    max_idx = len(window) - 1 - np.where(window[::-1] == player)[0][0]
-                    gaps = max_idx - min_idx + 1 - required_length
-                    if gaps <= 1 and (min_idx == 0 or max_idx == len(window)-1):
-                        seq = []
-                        for idx2, role in enumerate(window):
-                            if role == player:
-                                seq.append((idx1+idx2, col))
-                        if seq not in unblocked_list:
-                            unblocked_list.append(seq)
-                            unblocked_count += 1
+        for idx1 in range(board.shape[0] - target + 1):
+            window = array[idx1:idx1 + target]
+            if all(val != -player for val in window) and sum(val == player for val in window) == required_length:
+                min_idx = list(window).index(player)
+                max_idx = len(window) - 1 - list(window)[::-1].index(player)
+                gaps = max_idx - min_idx + 1 - required_length
+                if gaps <= max_gap:
+                    seq = []
+                    pos=[]
+                    for idx2, role in enumerate(window):
+                        if role == player:
+                            seq.append((idx1 + idx2, col))
+                            pos.append(idx1+idx2)
+                    seq = tuple(seq)
+                    if seq not in tmp_list:
+                        tmp_list[seq]={'min': idx1, 'max':idx1+target-1, 'pos': pos}
+                    else:
+                        tmp_list[seq]['max']=idx1+target-1
+    
     #Diagonal
     for idx0 in range(board.shape[0]):
         for dr in [-1,1]:
             array = np.diagonal(board, idx0 * dr)
-            for window_length in window_lengths:
-                if len(array) >= window_length:
-                    for idx1 in range(len(array) - window_length + 2):
-                        window = array[idx1:idx1+window_length]
-                        if (np.count_nonzero(window == -player) == 1 and (window[0] == -player or window[-1] == -player)) and np.count_nonzero(window == player) == required_length:
-                            flag_idx = np.where(window == -player)[0][0]
-                            min_idx = np.where(window == player)[0][0]
-                            max_idx = np.where(window == player)[0][-1]
-                            gaps = max_idx - min_idx + 1 - required_length
-                            if gaps <= 1 and (min_idx == flag_idx + 1 or max_idx == flag_idx - 1):
-                                seq = []
-                                for idx2, role in enumerate(window):
-                                    if role == player and dr == 1:
-                                        seq.append((idx1+idx2, idx0+idx1+idx2))
-                                    elif role == player and dr == -1:
-                                        seq.append((idx0+idx1+idx2, idx1+idx2))
-                                if seq not in unblocked_list:
-                                    unblocked_list.append(seq)
-                                    unblocked_count += 1
-                        elif (np.count_nonzero(window == -player) == 0 and (idx1 == 0 or idx1+window_length == len(board))) and np.count_nonzero(window == player) == required_length:
-                            min_idx = np.where(window == player)[0][0]
-                            max_idx = np.where(window == player)[0][-1]
-                            gaps = max_idx - min_idx + 1 - required_length
-                            if gaps <= 1 and (min_idx == 0 or max_idx == len(window)-1):
-                                seq = []
-                                for idx2, role in enumerate(window):
-                                    if role == player and dr == 1:
-                                        seq.append((idx1+idx2, idx0+idx1+idx2))
-                                    elif role == player and dr == -1:
-                                        seq.append((idx0+idx1+idx2, idx1+idx2))
-                                if seq not in unblocked_list:
-                                    unblocked_list.append(seq)
-                                    unblocked_count += 1
-
+            if len(array) >= target:
+                for idx1 in range(len(array) - target + 1):
+                    window = array[idx1:idx1+target]
+                    if all(val != -player for val in window) and sum(val == player for val in window) == required_length:
+                        min_idx = list(window).index(player)
+                        max_idx = len(window) - 1 - list(window)[::-1].index(player)
+                        gaps = max_idx - min_idx + 1 - required_length
+                        if gaps <= max_gap:
+                            seq = []
+                            pos = []
+                            for idx2, role in enumerate(window):
+                                if role == player and dr == 1:
+                                    seq.append((idx1+idx2, idx0+idx1+idx2))
+                                elif role == player and dr == -1:
+                                    seq.append((idx0+idx1+idx2, idx1+idx2))
+                                if role == player:
+                                    pos.append(idx1+idx2)
+                            seq = tuple(seq)
+                            #print(seq)
+                            if seq not in tmp_list:
+                                tmp_list[seq]={'min': idx1, 'max':idx1+target-1, 'pos': pos}
+                            else:
+                                #print("max increase")
+                                tmp_list[seq]['max']=idx1+target-1
+                                #print(tmp_list[seq]['max'])
+    
     #Anti-Diagonal
     for idx0 in range(board.shape[0]):
-        for dr in [-1, 1]:
-            array = np.fliplr(board).diagonal(idx0 * dr)
-            for window_length in window_lengths:
-                if len(array) >= window_length:
-                    for idx1 in range(len(array) - window_length + 1):
-                        window = array[idx1 : idx1 + window_length]
-                        if (
-                            (sum(val == -player for val in window) == 1 and (window[0] == -player or window[-1] == -player))
-                            and sum(val == player for val in window) == required_length
-                        ):
-                            flag_idx = list(window).index(-player)
-                            min_idx = list(window).index(player)
-                            max_idx = len(window) - 1 - list(window)[::-1].index(player)
-                            gaps = max_idx - min_idx + 1 - required_length
-                            # print(f"Min Index:{min_idx}, Max Index:{max_idx}, Gaps:{gaps}")
-                            if gaps <= 1 and (min_idx == flag_idx + 1 or max_idx == flag_idx - 1):
-                                seq = []
-                                for idx2, role in enumerate(window):
-                                    if role == player and dr == 1:
-                                        seq.append((len(board) - 1 - (idx1 + idx2), idx0 + idx1 + idx2))
-                                    elif role == player and dr == -1:
-                                        seq.append((len(board) - 1 - (idx0 + idx1 + idx2), idx1 + idx2))
-                                if seq not in unblocked_list:
-                                    unblocked_list.append(seq)
-                                    unblocked_count += 1
-                        elif (
-                            (sum(val == -player for val in window) == 0 and (idx1 == 0 or idx1 + window_length == len(board)))
-                            and sum(val == player for val in window) == required_length
-                        ):
-                            min_idx = list(window).index(player)
-                            max_idx = len(window) - 1 - list(window)[::-1].index(player)
-                            gaps = max_idx - min_idx + 1 - required_length
-                            # print(f"Min Index:{min_idx}, Max Index:{max_idx}, Gaps:{gaps}")
-                            if gaps <= 1 and (min_idx == 0 or max_idx == len(window) - 1):
-                                seq = []
-                                for idx2, role in enumerate(window):
-                                    if role == player and dr == 1:
-                                        seq.append((len(board) - 1 - (idx1 + idx2), idx0 + idx1 + idx2))
-                                    elif role == player and dr == -1:
-                                        seq.append((len(board) - 1 - (idx0 + idx1 + idx2), idx1 + idx2))
-                                if seq not in unblocked_list:
-                                    unblocked_list.append(seq)
-                                    unblocked_count += 1
-    return unblocked_count, unblocked_list
+        for dr in [-1,1]:
+            array = np.fliplr(board).diagonal(idx0*dr)
+            if len(array) >= target:
+                for idx1 in range(len(array)-target+1):
+                    window = array[idx1:idx1+target]
+                    if all(val != -player for val in window) and sum(val == player for val in window) == required_length:
+                        min_idx = list(window).index(player)
+                        max_idx = len(window) - 1 - required_length
+                        gaps = max_idx - min_idx + 1 - required_length
+                        if gaps <= max_gap:
+                            seq = []
+                            pos = []
+                            for idx2, role in enumerate(window):
+                                if role == player and dr == 1:
+                                    seq.append((board.shape[0] - 1 - (idx1+idx2), idx0+idx1+idx2))
+                                elif role == player and dr == -1:
+                                    seq.append((board.shape[0] - 1 - (idx0+idx1+idx2), idx1+idx2))
+                                if role == player:
+                                    pos.append(idx1+idx2)
+                            seq = tuple(seq)
+                            #print(seq)
+                            if seq not in tmp_list:
+                                tmp_list[seq]={'min': idx1, 'max':idx1+target-1, 'pos': pos}
+                            else:
+                                #print("max increase")
+                                tmp_list[seq]['max']=idx1+target-1
+                                #print(tmp_list[seq]['max'])
+    #Clean Up Tmp_list
+    for seq in tmp_list:
+        if tmp_list[seq]['min'] not in tmp_list[seq]['pos'] and tmp_list[seq]['max'] not in tmp_list[seq]['pos']:
+            unblocked_list[2].append(list(seq))
+        else:
+            unblocked_list[1].append(list(seq))
+    return unblocked_list
+
 
 # Board Evaluator Functions
 def evaluate1(board, target):
