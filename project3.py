@@ -22,8 +22,8 @@ import numpy as np
 import os.path
 import random
 import time
-
 import sys
+from os import cpu_count
 import traceback # For debugging
 
 
@@ -286,7 +286,8 @@ def play_existing_game():
         is_maximizing = (current_team_id == server_player1)
         evaluator = choose_evaluator(current_team_id)
         last_moves = phc.get_moves(game_id,  2) # make_move requires last two moves
-        min_depth=0 if cpu_count<8 else recommended_depth
+        #min_depth=0 if cpu_count()<8 else recommended_depth
+        min_depth=0
         try:
             coords, recommended_depth = mm.make_move(board, is_maximizing, target, last_moves, evaluator, timeout,  min_depth)
             row = coords[0]
