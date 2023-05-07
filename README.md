@@ -2,6 +2,13 @@
 
 Project 3 creates a generalized Tic-Tac-Toe game interacts with other engines via a dummy server or via the class server.
 
+## Team Members
+
+This team (ID #1338) includes
+- Eric Luo
+- Patrick Husson
+- Hao Liu
+
 ## Packages required
 
 - bottle
